@@ -3,7 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>:root{color-scheme:light}body{margin:0}</style>
+<meta name="description" content="Projected XI, captain and transfer ideas for your FPL team, built on a results-based projection model.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Gameweek Planner">
+<meta property="og:description" content="Enter your FPL team ID for a projected XI, captain pick and the best transfer for the next three gameweeks. Unofficial fan project.">
+<meta property="og:url" content="https://raameshappk.github.io/fpl-planner/">
+<meta property="og:image" content="https://raameshappk.github.io/fpl-planner/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://raameshappk.github.io/fpl-planner/og.png">
+<style>:root{color-scheme:light dark}body{margin:0}</style>
 </head>
 <body>
 <title>Gameweek Planner</title>
@@ -143,36 +151,70 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
 .steps b{display:block;font-weight:600}
 .foot{border-top:1px solid var(--line);padding-top:18px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px;max-width:80ch}
 @media (prefers-reduced-motion:no-preference){.tab,.pl{transition:background .15s,border-color .15s}}
+
+/* team form */
+.form{display:flex;flex-direction:column;gap:12px}
+.form-row{display:flex;flex-wrap:wrap;gap:10px}
+.inp{flex:1 1 180px;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.btn{font:inherit;font-weight:600;padding:10px 18px;border-radius:9px;border:0;background:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#0e1612}}
+:root[data-theme="dark"] .btn{color:#0e1612}
+.btn[disabled]{opacity:.6;cursor:progress}
+.status{font-size:14px;min-height:1.4em}
+.status.err{color:var(--warn)}
+.sel{font:inherit;font-size:14px;padding:4px 8px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.opts{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.opts div{display:flex;justify-content:space-between;gap:12px}
+.opts .best{font-weight:650;color:var(--accent)}
+.chiprow{display:flex;flex-direction:column;gap:3px;font-size:14px}
+.sub{margin-top:-6px}
+[hidden]{display:none!important}
 </style>
 
 <div class="wrap">
   <header class="head">
     <p class="eyebrow">Fantasy football planning · unofficial fan project</p>
     <h1>Gameweek Planner</h1>
-    <p class="lede">A projected XI, transfers and fixture view for GW10 to GW12. It models every player's expected points from this season's results, fixtures, minutes and team news, then picks the best squad under the rules.</p>
+    <p class="lede">Enter your team ID to get a projected XI, captain pick and the best transfer for the next three gameweeks. Every player's expected points come from this season's results, fixtures, minutes and team news.</p>
     <dl class="strip" id="strip"></dl>
   </header>
 
+  <section class="sec" id="team-sec" aria-labelledby="team-h" hidden>
+    <h2 id="team-h">Your team</h2>
+    <form class="card form" id="form" autocomplete="off" novalidate>
+      <label for="tid" class="note">Your FPL team ID: the number in the address when you open your Points page, e.g. fantasy.premierleague.com/entry/<b>1234567</b>/event/10</label>
+      <div class="form-row">
+        <input class="inp mono" id="tid" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="1234567" aria-describedby="status">
+        <button class="btn" id="go" type="submit">Analyse my team</button>
+      </div>
+      <p class="note">It makes a read-only lookup of your public team page. Nothing is stored on a server; the ID is only remembered in your own browser.</p>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </form>
+    <div id="user" hidden>
+      <div class="sec-head">
+        <div><h2 id="user-h"></h2><p class="note" id="user-note"></p></div>
+        <label class="note">Free transfers <select class="sel" id="ftsel"></select></label>
+      </div>
+      <div id="user-plan"></div>
+      <div class="card" id="chips" style="margin-top:18px"></div>
+    </div>
+  </section>
+
   <section class="sec" aria-labelledby="plan-h">
     <div class="sec-head">
-      <h2 id="plan-h">The plan</h2>
-      <div class="tabs" role="tablist" aria-label="Gameweek" id="tabs"></div>
-    </div>
-    <div class="plan">
-      <div class="pitch" id="pitch" aria-label="Projected starting XI"></div>
-      <div class="side">
-        <div class="card" id="decisions"></div>
-        <div class="card"><h3>Bench, in order</h3><div class="bench" id="bench"></div></div>
-        <p class="note">Bar along the bottom of each player shows how hard the fixture is, from green (easy) to red (hard). Numbers are projected points for the week.</p>
+      <div>
+        <h2 id="plan-h">Example: a full three-week plan</h2>
+        <p>Output of the full optimiser for one squad (GW10 to GW12, 4 November), including free-transfer banking and chip timing. The box above runs a lighter version on your team.</p>
       </div>
     </div>
+    <div id="example"></div>
   </section>
 
   <section class="sec" aria-labelledby="hm-h">
     <div class="sec-head">
       <div>
         <h2 id="hm-h">Fixture difficulty</h2>
-        <p>Next five gameweeks, easiest runs first. The model rating comes from each side's real results this season; the official rating is the FPL site's own.</p>
+        <p>Easiest runs first. The model rating comes from each side's real results this season; the official rating is the FPL site's own.</p>
       </div>
       <div class="seg" role="tablist" aria-label="Rating source" id="seg"></div>
     </div>
@@ -184,7 +226,7 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
     <div class="sec-head">
       <div>
         <h2 id="tg-h">Players to look at</h2>
-        <p>Highest projected points over GW10 to GW14, later weeks counting slightly less.</p>
+        <p id="tg-sub">Highest projected points over the next gameweeks, later weeks counting slightly less.</p>
       </div>
       <div class="tabs" role="tablist" aria-label="Position" id="postabs"></div>
     </div>
@@ -195,9 +237,9 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
     <h2 id="in-h">What goes into it</h2>
     <div class="cols">
       <div class="card">
-        <h3>Availability inputs this week</h3>
+        <h3>Availability inputs</h3>
         <ul class="list" id="news"></ul>
-        <p class="note">From public team news on 2 and 3 November: <a href="https://www.fantasyfootballscout.co.uk/2026/11/03/saliba-back-in-training-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Arsenal, Liverpool, City</a> and <a href="https://www.fantasyfootballscout.co.uk/2026/11/02/amad-dorgu-rashford-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Man Utd, Villa</a>. Check the latest press conferences before acting.</p>
+        <p class="note">Hand-checked from public team news on 2 and 3 November: <a href="https://www.fantasyfootballscout.co.uk/2026/11/03/saliba-back-in-training-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Arsenal, Liverpool, City</a> and <a href="https://www.fantasyfootballscout.co.uk/2026/11/02/amad-dorgu-rashford-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Man Utd, Villa</a>. Check the latest press conferences before acting.</p>
       </div>
       <div class="card">
         <h3>How the projection works</h3>
@@ -205,16 +247,15 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
           <li><b>Team strength</b>Attack and defence ratings fitted to this season's results, adjusted for opponent, weighted to recent games and blended with expected goals.</li>
           <li><b>Minutes</b>Season and last five matches, injury flags and rotation notes.</li>
           <li><b>Points</b>FPL's scoring rules applied to chances created, clean-sheet odds, bonus and defensive actions.</li>
-          <li><b>Planning</b>One optimiser picks squad, captain, transfers and chip timing across three gameweeks, counting a 4-point cost for each extra transfer.</li>
+          <li><b>Your team</b>The page picks your best XI and captain, then tests every one and two player swap over three gameweeks, charging 4 points for each transfer beyond your free ones.</li>
         </ol>
-        <div class="callout">Treat the numbers as a ranking more than a forecast. The model has not been backtested yet, and it probably rates defenders too highly.</div>
+        <div class="callout">Treat the numbers as a ranking more than a forecast. The model has not been backtested yet, and it probably rates defenders too highly. Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.</div>
       </div>
     </div>
   </section>
 
   <footer class="foot">
     <p>Built with Python and the public FPL data feed. Unofficial: not affiliated with or endorsed by the Premier League or Fantasy Premier League. Projections are estimates for fun, not advice.</p>
-    <p>Data as of 4 November 2026, before the GW10 deadline.</p>
   </footer>
 </div>
 
@@ -286,59 +327,260 @@ const D = {
   ]
 };
 
-const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const parse = (cell) => { const m = /^(\w+)\((H|A)\)(\d)\/(\d)$/.exec(cell); return m ? {opp:m[1], ven:m[2], off:+m[3], mod:+m[4]} : null; };
-const fmt = (n) => n.toFixed(1);
-let gw = 10, rating = "mod", pos = "DEF";
-try { const h = location.hash.replace("#",""); if (/^gw1[0-2]$/.test(h)) gw = +h.slice(2); } catch (e) {}
 
-function strip() {
-  $("#strip").innerHTML =
-    `<div><dt>Free transfers</dt><dd>1 <small>per week</small></dd></div>` +
-    `<div><dt>Chips</dt><dd><small>${esc(D.chips)}</small></dd></div>` +
-    `<div><dt>Projected GW10 to GW12</dt><dd class="mono">${fmt(D.total)} <small>points, after captain</small></dd></div>`;
+const WORKER = "https://fpl-proxy.kandalgaonkar-raamesh.workers.dev";
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (n) => Number(n).toFixed(1);
+const POS = ["GK","DEF","MID","FWD"], W3 = [1, 0.92, 0.8464];
+const CHIP_LABEL = {wildcard:"Wildcard", freehit:"Free Hit", bboost:"Bench Boost", "3xc":"Triple Captain"};
+const CHIP_COST = {bboost:12, "3xc":8};
+let P = null, rating = "mod", pos = "DEF";
+
+/* ---------- fixtures */
+function parseCell(c) {
+  if (!c || c === "BLANK") return {blank:true};
+  const parts = c.split("+").map((x) => { const m = /^(.+)\((H|A)\)(\d|\?)\/(\d)$/.exec(x); return m ? {opp:m[1], ven:m[2], off:m[3]==="?"?3:+m[3], mod:+m[4]} : null; }).filter(Boolean);
+  if (!parts.length) return {blank:true};
+  const avg = (k) => Math.round(parts.reduce((s, x) => s + x[k], 0) / parts.length);
+  return {opp:parts[0].opp, ven:parts[0].ven, off:avg("off"), mod:avg("mod"), dgw:parts.length > 1,
+          label:parts.map((x) => `${x.opp} (${x.ven})`).join(" + ")};
 }
-function tabs() {
-  $("#tabs").innerHTML = D.gws.map((g) => `<button class="tab" role="tab" id="t${g}" aria-selected="${g===gw}" data-gw="${g}">GW${g}</button>`).join("");
-  $("#tabs").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { gw = +b.dataset.gw; try { location.hash = "gw" + gw; } catch (e) {} plan(); tabs(); }));
+const staticTicker = Object.keys(D.fx).map((t) => ({t, c:D.fx[t]}));
+
+/* ---------- plan component */
+function decHtml(title, trs, o) {
+  return `<h3>${esc(title)}</h3>` +
+    (trs.length ? trs.map((t) => `<div class="tr"><span class="out">${esc(t.out)}</span><span class="arrow">→</span><span>${esc(t.in)}</span><small>${esc(t.outc)} to ${esc(t.inc)}</small></div>`).join("") : `<p class="note">${esc(o.noTr || "No transfer.")}</p>`) +
+    `<div class="kv"><div><span>Captain</span><strong>${esc(o.cap)}</strong></div><div><span>Free transfers</span><strong class="mono">${o.ft}</strong></div><div><span>Hits</span><strong class="mono">${o.hits}</strong></div><div><span>Projected</span><strong class="mono">${fmt(o.proj)}</strong></div></div>` +
+    `<p class="note">Captain counts double: ${esc(o.cap)} projects ${fmt(o.capPts)}, worth ${fmt(o.capPts * 2)}.${o.extra ? " " + esc(o.extra) : ""}</p>`;
 }
-function plan() {
-  const w = D.weeks[gw], i = gw - 10;
-  const node = (p, isBench) => {
-    const f = parse(D.fx[p[1]][i]);
-    const cap = p[0] === w.cap && !isBench ? `<span class="cap" title="Captain">C</span>` : "";
-    return `<div class="pl" title="${esc(p[0])} · ${p[1]} · £${p[2].toFixed(1)}m" style="--fd:var(--d${f.mod})">${cap}<b>${esc(p[0])}</b><span class="fx">${f.opp} (${f.ven})</span><span class="pts">${fmt(p[3])}</span></div>`;
+function mountPlan(root, cfg) {
+  let gw = cfg.gws[0];
+  root.innerHTML = `<div class="tabs" role="tablist" aria-label="Gameweek" style="margin-bottom:16px"></div><div class="plan"><div class="pitch" aria-label="Projected starting XI"></div><div class="side"><div class="card dec"></div><div class="card"><h3>Bench, in order</h3><div class="bench"></div></div>${cfg.sideExtra || ""}<p class="note">The bar under each player shows how hard that fixture is, from green (easy) to red (hard). Numbers are projected points for the week.</p></div></div>`;
+  const draw = () => {
+    const w = cfg.weeks[gw], i = cfg.gws.indexOf(gw);
+    $(".tabs", root).innerHTML = cfg.gws.map((g) => `<button class="tab" role="tab" aria-selected="${g === gw}" data-gw="${g}">GW${g}</button>`).join("");
+    $(".tabs", root).querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { gw = +b.dataset.gw; draw(); }));
+    const node = (p) => {
+      const f = cfg.fx(p.t, i) || {blank:true};
+      const cap = p.n === w.cap && w.xi && Object.values(w.xi).flat().includes(p) ? `<span class="cap" title="Captain">C</span>` : "";
+      return `<div class="pl" title="${esc(p.n)} · ${esc(p.t)} · £${p.c.toFixed(1)}m" style="--fd:${f.blank ? "var(--line)" : `var(--d${f.mod})`}">${cap}<b>${esc(p.n)}</b><span class="fx">${f.blank ? "No game" : esc(f.label || `${f.opp} (${f.ven})`)}</span><span class="pts">${fmt(p.pts)}</span></div>`;
+    };
+    $(".pitch", root).innerHTML = ["FWD","MID","DEF","GK"].map((k) => `<div class="row">${w.xi[k].map(node).join("")}</div>`).join("");
+    $(".dec", root).innerHTML = w.dec;
+    $(".bench", root).innerHTML = w.bench.map((b, n) => `<div class="bn"><i>${n + 1}</i><b>${esc(b.n)}</b><span>${fmt(b.pts)}</span></div>`).join("");
   };
-  $("#pitch").innerHTML = ["FWD","MID","DEF","GK"].map((k) => `<div class="row">${w.xi[k].map((p) => node(p)).join("")}</div>`).join("");
-  const cap = Object.values(w.xi).flat().find((p) => p[0] === w.cap);
-  $("#decisions").innerHTML =
-    `<h3>GW${gw} decisions</h3>` +
-    w.tr.map((t) => `<div class="tr"><span class="out">${esc(t.out)}</span><span class="arrow">→</span><span>${esc(t.in)}</span><small>${esc(t.outc)} to ${esc(t.inc)}</small></div>`).join("") +
-    `<div class="kv"><div><span>Captain</span><strong>${esc(w.cap)}</strong></div><div><span>Free transfers</span><strong class="mono">${w.ft}</strong></div><div><span>Hits</span><strong class="mono">${w.hits}</strong></div><div><span>Projected</span><strong class="mono">${fmt(w.proj)}</strong></div></div>` +
-    `<p class="note">Captain counts double: ${esc(w.cap)} projects ${fmt(cap[3])}, worth ${fmt(cap[3]*2)}.</p>`;
-  $("#bench").innerHTML = w.bench.map((b, n) => `<div class="bn"><i>${n+1}</i><b>${esc(b[0])}</b><span>${fmt(b[3])}</span></div>`).join("");
+  draw();
 }
+
+/* ---------- example (static snapshot) */
+function mountExample() {
+  const weeks = {};
+  for (const g of D.gws) {
+    const w = D.weeks[g], xi = {};
+    for (const k of POS) xi[k] = w.xi[k].map((a) => ({n:a[0], t:a[1], c:a[2], pts:a[3]}));
+    const cap = Object.values(xi).flat().find((p) => p.n === w.cap);
+    weeks[g] = {xi, cap:w.cap, bench:w.bench.map((b) => ({n:b[0], pts:b[3]})),
+      dec:decHtml(`GW${g} decisions`, w.tr, {cap:w.cap, ft:w.ft, hits:w.hits, proj:w.proj, capPts:cap.pts})};
+  }
+  mountPlan($("#example"), {gws:D.gws, weeks, fx:(t, i) => parseCell(D.fx[t][i])});
+}
+
+/* ---------- squad maths (runs in the browser) */
+function bestXI(squad, i) {
+  const by = {GK:[], DEF:[], MID:[], FWD:[]};
+  squad.forEach((p) => by[p.p].push(p));
+  for (const k of POS) by[k].sort((a, b) => b.ep[i] - a.ep[i]);
+  let best = null;
+  for (let d = 3; d <= 5; d++) for (let m = 2; m <= 5; m++) {
+    const f = 10 - d - m;
+    if (f < 1 || f > 3 || by.GK.length < 1 || by.DEF.length < d || by.MID.length < m || by.FWD.length < f) continue;
+    const xi = [by.GK[0], ...by.DEF.slice(0, d), ...by.MID.slice(0, m), ...by.FWD.slice(0, f)];
+    const pts = xi.reduce((s, p) => s + p.ep[i], 0);
+    if (!best || pts > best.pts) best = {xi, pts, d, m, f};
+  }
+  if (!best) return null;
+  const inXI = new Set(best.xi);
+  const rest = squad.filter((p) => !inXI.has(p));
+  const bench = [...rest.filter((p) => p.p === "GK"), ...rest.filter((p) => p.p !== "GK").sort((a, b) => b.ep[i] - a.ep[i])];
+  const cap = best.xi.reduce((a, b) => (b.ep[i] > a.ep[i] ? b : a));
+  const benchPts = bench.reduce((s, p) => s + p.ep[i], 0);
+  return {xi:best.xi, bench, cap, pts:best.pts, total:best.pts + cap.ep[i], benchPts};
+}
+const score = (squad) => W3.reduce((s, w, i) => { const r = bestXI(squad, i); return s + w * (r.total + 0.1 * r.benchPts); }, 0);
+const clubsOk = (squad) => { const c = {}; for (const p of squad) { c[p.t] = (c[p.t] || 0) + 1; if (c[p.t] > 3) return false; } return true; };
+const swap = (squad, outs, ins) => squad.filter((p) => !outs.includes(p)).concat(ins);
+
+function searchTransfers(squad, bank, ft) {
+  const base = score(squad), inSq = new Set(squad.map((p) => p.id));
+  const val = (p) => p.ep.slice(0, 3).reduce((s, e, i) => s + W3[i] * e, 0);
+  const pool = {};
+  for (const k of POS) pool[k] = P.players.filter((p) => p.p === k && !inSq.has(p.id)).sort((a, b) => val(b) - val(a)).slice(0, 35);
+  const singles = [];
+  for (const o of squad) for (const c of pool[o.p]) {
+    if (bank + o.c - c.c < -1e-9) continue;
+    const ns = swap(squad, [o], [c]);
+    if (!clubsOk(ns)) continue;
+    singles.push({outs:[o], ins:[c], sc:score(ns)});
+  }
+  singles.sort((a, b) => b.sc - a.sc);
+  const top = singles.slice(0, 40), pairs = [];
+  for (let a = 0; a < top.length; a++) for (let b = a + 1; b < top.length; b++) {
+    const x = top[a], y = top[b];
+    if (x.outs[0] === y.outs[0] || x.ins[0] === y.ins[0]) continue;
+    const outs = [x.outs[0], y.outs[0]], ins = [x.ins[0], y.ins[0]];
+    if (bank + outs[0].c + outs[1].c - ins[0].c - ins[1].c < -1e-9) continue;
+    const ns = swap(squad, outs, ins);
+    if (!clubsOk(ns)) continue;
+    pairs.push({outs, ins, sc:score(ns)});
+  }
+  pairs.sort((a, b) => b.sc - a.sc);
+  const mk = (n, m) => {
+    const gain = m ? m.sc - base : 0, hits = Math.max(0, n - ft);
+    return {n, gain, hits, net:gain - 4 * hits - Math.min(n, ft) * 1.0, m};
+  };
+  const opts = [mk(0, null)];
+  if (singles[0]) opts.push(mk(1, singles[0]));
+  if (pairs[0]) opts.push(mk(2, pairs[0]));
+  const best = opts.reduce((a, b) => (b.net > a.net ? b : a));
+  return {opts, best, base};
+}
+function estFT(hist, upto) {
+  const chips = {}; (hist.chips || []).forEach((c) => { chips[c.event] = c.name; });
+  const cur = {}; (hist.current || []).forEach((e) => { cur[e.event] = e; });
+  let ft = 1;
+  for (let g = 2; g <= upto; g++) {
+    const made = (cur[g] && cur[g].event_transfers) || 0;
+    ft = (chips[g] === "wildcard" || chips[g] === "freehit") ? Math.min(ft + 1, 5) : Math.min(Math.max(ft - made, 0) + 1, 5);
+  }
+  return ft;
+}
+
+/* ---------- team lookup */
+async function api(path) {
+  const r = await fetch(WORKER + path);
+  if (!r.ok) { const e = new Error("http " + r.status); e.status = r.status; throw e; }
+  return r.json();
+}
+let STATE = null;
+function setStatus(msg, err) { const s = $("#status"); s.textContent = msg; s.className = "status" + (err ? " err" : ""); }
+
+async function analyse(id) {
+  const btn = $("#go"); btn.disabled = true; setStatus("Looking up your team…");
+  try {
+    const [entry, hist] = await Promise.all([api(`/entry/${id}/`), api(`/entry/${id}/history/`)]);
+    let ev = entry.current_event;
+    if (!ev) throw Object.assign(new Error("no gameweek"), {status:"early"});
+    if (ev > 1 && (hist.chips || []).some((c) => c.name === "freehit" && c.event === ev)) ev -= 1;
+    const picks = await api(`/entry/${id}/event/${ev}/picks/`);
+    const byId = new Map(P.players.map((p) => [p.id, p]));
+    const squad = picks.picks.map((x) => byId.get(x.element)).filter(Boolean);
+    if (squad.length !== 15) throw Object.assign(new Error("squad"), {status:"squad"});
+    try { localStorage.setItem("fpl-team", String(id)); } catch (e) {}
+    STATE = {entry, hist, ev, squad, bank:picks.entry_history.bank / 10, ftEst:estFT(hist, ev)};
+    $("#ftsel").innerHTML = [1,2,3,4,5].map((n) => `<option value="${n}"${n === STATE.ftEst ? " selected" : ""}>${n}${n === STATE.ftEst ? " (estimated)" : ""}</option>`).join("");
+    setStatus("");
+    renderUser();
+    $("#user").hidden = false;
+    $("#user").scrollIntoView({behavior:"smooth", block:"start"});
+  } catch (e) {
+    const m = {404:"No team found with that ID. Check the number in your FPL address.", early:"That team has no gameweek data yet.", squad:"Couldn't read a full 15-player squad for that team."}[e.status];
+    setStatus(m || "Couldn't reach the FPL data just now. It can be slow or offline around deadlines; try again in a minute.", true);
+  } finally { btn.disabled = false; }
+}
+
+function renderUser() {
+  const {entry, hist, ev, squad, bank} = STATE, ft = +$("#ftsel").value;
+  const gws = P.gws.slice(0, 3), g0 = gws[0];
+  const res = searchTransfers(squad, bank, ft), best = res.best;
+  const final = best.m ? swap(squad, best.m.outs, best.m.ins) : squad;
+  const sName = (p) => p.n, label = (p) => `${p.t} £${p.c.toFixed(1)}m`;
+  const trs = best.m ? best.m.outs.map((o, k) => ({out:o.n, in:best.m.ins[k].n, outc:label(o), inc:label(best.m.ins[k])})) : [];
+  const weeks = {};
+  gws.forEach((g, i) => {
+    const r = bestXI(final, i), xi = {GK:[], DEF:[], MID:[], FWD:[]};
+    r.xi.forEach((p) => xi[p.p].push({...p, pts:p.ep[i]}));
+    const o = {cap:r.cap.n, ft:i === 0 ? ft : "-", hits:i === 0 ? best.hits : 0, proj:r.total - 4 * (i === 0 ? best.hits : 0), capPts:r.cap.ep[i]};
+    weeks[g] = {xi, cap:r.cap.n, bench:r.bench.map((p) => ({n:p.n, pts:p.ep[i]})),
+      dec:i === 0 ? decHtml(`GW${g} decisions`, trs, {...o, noTr:"Roll the free transfer: no move clears the bar this week."})
+                  : decHtml(`GW${g}`, [], {...o, noTr:"Squad held from the first week's decision."})};
+    // pitch nodes must share identity with the captain check
+    weeks[g].cap = r.cap.n;
+  });
+  const optRow = (o) => `<div class="${o === best ? "best" : ""}"><span>${o.n === 0 ? "Roll (no transfer)" : o.n + (o.n === 1 ? " transfer" : " transfers")}${o.hits ? ` · ${o.hits} hit${o.hits > 1 ? "s" : ""}` : ""}</span><span class="mono">${o.n === 0 ? "0.0" : (o.net >= 0 ? "+" : "") + fmt(o.net)}</span></div>`;
+  const sideExtra = `<div class="card"><h3>Transfer options</h3><div class="opts">${res.opts.map(optRow).join("")}</div><p class="note">Net points over three gameweeks after hits. Using a free transfer also gives up about one point of banking value.</p></div>`;
+  $("#user-h").textContent = entry.name;
+  $("#user-note").textContent = `Based on your GW${ev} squad, £${bank.toFixed(1)}m in the bank.`;
+  mountPlan($("#user-plan"), {gws, weeks, fx:(t, i) => { const row = P.ticker.find((x) => x.t === t); return row ? parseCell(row.c[i]) : null; }, sideExtra});
+  renderChips(hist, g0, bestXI(final, 0), ft);
+}
+function renderChips(hist, g0, r0) {
+  const used = hist.chips || [];
+  const left = P.chips.filter((w) => !used.some((u) => u.name === w.name && w.start <= u.event && u.event <= w.stop));
+  const lines = [];
+  for (const w of left.sort((a, b) => a.start - b.start)) {
+    const open = w.start <= g0 && g0 <= w.stop, name = CHIP_LABEL[w.name];
+    let txt = `${name}: playable GW${w.start} to GW${w.stop}.`;
+    if (open && w.name === "bboost") txt = `${name}: this week it adds about ${fmt(r0.benchPts)} bench points. ${r0.benchPts > CHIP_COST.bboost ? "Worth a look." : "Not worth spending yet; a double gameweek usually beats this."}`;
+    else if (open && w.name === "3xc") txt = `${name}: adds about ${fmt(r0.cap.ep[0])} points on ${r0.cap.n}. ${r0.cap.ep[0] > CHIP_COST["3xc"] ? "Worth a look." : "Not worth spending yet; save it for a double gameweek."}`;
+    else if (open) txt = `${name}: available now. Needs the full planner to judge (the script on GitHub).`;
+    lines.push(`<div>${esc(txt)}</div>`);
+  }
+  $("#chips").innerHTML = `<h3>Chips</h3><div class="chiprow">${lines.join("") || "<div>None left this season.</div>"}</div>` +
+    (used.length ? `<p class="note">Used: ${used.map((u) => `${CHIP_LABEL[u.name] || u.name} (GW${u.event})`).join(", ")}.</p>` : "");
+}
+
+/* ---------- heatmap and targets */
 function heat() {
-  $("#seg").innerHTML = [["mod","Model rating"],["off","Official rating"]].map(([k,l]) => `<button class="tab" role="tab" aria-selected="${rating===k}" data-r="${k}">${l}</button>`).join("");
+  const ticker = P ? P.ticker : staticTicker, gws = P ? P.gws : D.fxGws;
+  $("#seg").innerHTML = [["mod","Model rating"],["off","Official rating"]].map(([k, l]) => `<button class="tab" role="tab" aria-selected="${rating === k}" data-r="${k}">${l}</button>`).join("");
   $("#seg").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { rating = b.dataset.r; heat(); }));
-  const teams = Object.keys(D.fx).map((t) => [t, D.fx[t].map(parse)]);
-  teams.sort((a, b) => a[1].reduce((s, f) => s + f[rating], 0) - b[1].reduce((s, f) => s + f[rating], 0));
-  $("#hm").innerHTML = `<thead><tr><th></th>${D.fxGws.map((g) => `<th>GW${g}</th>`).join("")}</tr></thead><tbody>` +
-    teams.map(([t, fs]) => `<tr><td class="t">${t}</td>${fs.map((f) => `<td class="c" style="--bg-c:var(--d${f[rating]})">${f.opp} (${f.ven})<small>${f[rating]}</small></td>`).join("")}</tr>`).join("") + `</tbody>`;
+  const rows = ticker.map((r) => ({t:r.t, cells:r.c.map(parseCell)}));
+  const mean = (r) => { const v = r.cells.filter((c) => !c.blank).map((c) => c[rating]); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 3; };
+  rows.sort((a, b) => mean(a) - mean(b));
+  $("#hm").innerHTML = `<thead><tr><th></th>${gws.map((g) => `<th>GW${g}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map((r) => `<tr><td class="t">${esc(r.t)}</td>${r.cells.map((c) => c.blank ? `<td class="c" style="--bg-c:var(--bg)">–</td>` : `<td class="c" style="--bg-c:var(--d${c[rating]})">${esc(c.label)}<small>${c[rating]}</small></td>`).join("")}</tr>`).join("") + `</tbody>`;
 }
 function targets() {
-  $("#postabs").innerHTML = ["GK","DEF","MID","FWD"].map((k) => `<button class="tab" role="tab" aria-selected="${pos===k}" data-p="${k}">${k}</button>`).join("");
+  $("#postabs").innerHTML = POS.map((k) => `<button class="tab" role="tab" aria-selected="${pos === k}" data-p="${k}">${k}</button>`).join("");
   $("#postabs").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { pos = b.dataset.p; targets(); }));
-  const rows = D.targets[pos], max = Math.max(...rows.map((r) => r[3]));
-  $("#targets").innerHTML = rows.map((r) => `<div class="tg"><b>${esc(r[0])}<small>${r[1]} · £${r[2].toFixed(1)}m</small></b><div class="bar"><i style="width:${(r[3]/max*100).toFixed(1)}%"></i></div><span class="v">${fmt(r[3])}</span></div>`).join("");
+  let rows;
+  if (P) {
+    const n = Math.min(5, P.gws.length);
+    rows = P.players.filter((p) => p.p === pos && p.a >= 0.5).map((p) => [p.n, p.t, p.c, p.ep.slice(0, n).reduce((s, e, i) => s + e * Math.pow(0.92, i), 0)]).sort((a, b) => b[3] - a[3]).slice(0, 10);
+    $("#tg-sub").textContent = `Highest projected points over GW${P.gws[0]} to GW${P.gws[n - 1]}, later weeks counting slightly less. Players doubtful for the next gameweek are left out.`;
+  } else rows = D.targets[pos];
+  const max = Math.max(...rows.map((r) => r[3]));
+  $("#targets").innerHTML = rows.map((r) => `<div class="tg"><b>${esc(r[0])}<small>${esc(r[1])} · £${r[2].toFixed(1)}m</small></b><div class="bar"><i style="width:${(r[3] / max * 100).toFixed(1)}%"></i></div><span class="v">${fmt(r[3])}</span></div>`).join("");
 }
 function news() {
   const lab = {out:"Out", doubt:"Doubt", susp:"Suspended"};
   $("#news").innerHTML = D.news.map((n) => `<li><span class="pill ${n[0]}">${lab[n[0]]}</span><span><b>${esc(n[1])}</b><br><span class="muted">${esc(n[2])}</span></span></li>`).join("");
 }
-window.addEventListener("hashchange", () => { try { const h = location.hash.replace("#",""); if (/^gw1[0-2]$/.test(h)) { gw = +h.slice(2); plan(); tabs(); } } catch (e) {} });
-strip(); tabs(); plan(); heat(); targets(); news();
+function strip() {
+  const when = (iso) => { try { return new Date(iso).toLocaleString(undefined, {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}); } catch (e) { return ""; } };
+  $("#strip").innerHTML = P
+    ? `<div><dt>Projections updated</dt><dd class="mono">${esc(when(P.generated))}</dd></div><div><dt>Next deadline</dt><dd class="mono">${esc(when(P.deadline))} <small>GW${P.gws[0]}</small></dd></div><div><dt>Horizon</dt><dd class="mono">GW${P.gws[0]} to GW${P.gws[P.gws.length - 1]}</dd></div>`
+    : `<div><dt>Snapshot</dt><dd class="mono">4 Nov 2026 <small>GW10 to GW12</small></dd></div>`;
+}
+
+/* ---------- start */
+async function start() {
+  try { const r = await fetch("projections.json", {cache:"no-cache"}); if (r.ok) P = await r.json(); } catch (e) {}
+  strip(); mountExample(); heat(); targets(); news();
+  if (!P) return;
+  $("#team-sec").hidden = false;
+  try { const v = localStorage.getItem("fpl-team"); if (v) $("#tid").value = v; } catch (e) {}
+  $("#form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("#tid").value.trim();
+    if (!/^\d{1,9}$/.test(v)) { setStatus("Enter the number from your FPL address, digits only.", true); return; }
+    analyse(+v);
+  });
+  $("#ftsel").addEventListener("change", () => STATE && renderUser());
+}
+start();
 </script>
 
 </body>

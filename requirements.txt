@@ -1,0 +1,4 @@
+requests
+pandas
+numpy
+pulp>=2.7,<4

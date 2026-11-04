@@ -1,0 +1,28 @@
+{
+  "_README": "Your team-news layer. Edit before each deadline using press conferences. Keys are web_names (use 'Name:CLUB' if ambiguous). Fields: avail (0-1 chance of playing next GW), out_gws (number of GWs fully out, then back), minutes_mult (rotation/minutes scaler, e.g. 0.7), pen_taker (true), note (text). Entries below come from FFScout team news dated 2-3 Nov 2026 and need checking against the latest press conferences before you act on them.",
+
+  "Saka": {"out_gws": 2, "note": "quad - out (FFScout 3 Nov); check return date"},
+  "Semenyo": {"out_gws": 6, "note": "knee - medium-term (FFScout 3 Nov)"},
+  "Gravenberch": {"out_gws": 2, "note": "heel - out"},
+  "Ekitike": {"out_gws": 4, "note": "Achilles - out"},
+  "Bradley": {"out_gws": 3, "note": "knee - out"},
+  "Frimpong": {"out_gws": 2, "note": "hamstring - out"},
+  "Leoni": {"out_gws": 4, "note": "knee - out"},
+  "Shaw": {"out_gws": 3, "note": "out until after the international break"},
+  "Ugarte": {"out_gws": 8, "note": "knee - long-term"},
+  "Sesko": {"out_gws": 6, "note": "calf - long-term"},
+  "Martínez:MUN": {"out_gws": 1, "note": "suspended GW10 v Villa"},
+  "Cash": {"out_gws": 1, "note": "suspended GW10 at Old Trafford"},
+  "Dorgu": {"avail": 0.5, "note": "hamstring - doubt for GW10"},
+  "Rashford": {"avail": 0.5, "note": "hip - day by day (Carrick)"},
+  "Wan-Bissaka": {"avail": 0.5, "note": "hamstring - back in training this week"},
+  "Amad": {"avail": 0.8, "note": "withdrawn Saturday, has trained"},
+  "Manzambi": {"avail": 0.4, "note": "recovering - no update from Emery"},
+  "Saliba": {"avail": 0.8, "note": "back in training, 'fit to play' - Arteta update at presser"},
+  "Konsa": {"minutes_mult": 0.75, "note": "judgement call: Saliba return likely cuts minutes"},
+  "Gvardiol": {"minutes_mult": 0.85, "note": "rotation risk flag"},
+  "Wissa": {"pen_taker": true, "note": "Newcastle penalty taker (missed one GW5)"},
+  "Gibbs-White": {"pen_taker": true, "note": "Forest penalty taker"},
+  "B.Fernandes": {"pen_taker": true, "note": "Man Utd penalty taker"},
+  "Le Fée": {"pen_taker": true, "note": "Sunderland penalty taker (missed one GW4)"}
+}
