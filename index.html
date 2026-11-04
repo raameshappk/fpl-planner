@@ -200,11 +200,11 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
     </div>
   </section>
 
-  <section class="sec" aria-labelledby="plan-h">
+  <section class="sec" id="ex-sec" aria-labelledby="plan-h">
     <div class="sec-head">
       <div>
         <h2 id="plan-h">Example: a full three-week plan</h2>
-        <p>Output of the full optimiser for one squad (GW10 to GW12, 4 November), including free-transfer banking and chip timing. The box above runs a lighter version on your team.</p>
+        <p>Output of the full optimiser for one squad (GW10 to GW12, 4 November), including free-transfer banking and chip timing. Enter your team ID above to replace this with your own.</p>
       </div>
     </div>
     <div id="example"></div>
@@ -483,6 +483,7 @@ async function analyse(id) {
     setStatus("");
     renderUser();
     $("#user").hidden = false;
+    $("#ex-sec").hidden = true; // your plan replaces the example
     $("#user").scrollIntoView({behavior:"smooth", block:"start"});
   } catch (e) {
     const m = {404:"No team found with that ID. Check the number in your FPL address.", early:"That team has no gameweek data yet.", squad:"Couldn't read a full 15-player squad for that team."}[e.status];
