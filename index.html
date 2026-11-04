@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>:root{color-scheme:light}body{margin:0}</style>
+</head>
+<body>
+<title>Gameweek Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: one calm column. Plan tabs with a pitch on the left and the week's decisions on the right,
+   then a fixture heatmap, then targets and inputs. Colour comes only from the pitch green and the 1-5 difficulty scale. */
+:root{
+  --bg:#f4f8f6; --surface:#ffffff; --ink:#13201a; --muted:#566860; --line:#dce6e0;
+  --accent:#17734d; --accent-soft:#e1f1e9; --pitch:#e8f4ed; --pitch-line:#c4dccf;
+  --capt:#13201a; --capt-ink:#ffffff; --warn:#8a5a00; --warn-soft:#fbf0d6;
+  --d1:#b5e2cb; --d2:#d5ecce; --d3:#eeebcd; --d4:#f4d1bc; --d5:#eeaf9f;
+  --font-body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1612; --surface:#15201a; --ink:#e7f0ea; --muted:#9bb0a5; --line:#25342b;
+    --accent:#4cc08c; --accent-soft:#17342a; --pitch:#122a20; --pitch-line:#24493a;
+    --capt:#e7f0ea; --capt-ink:#0e1612; --warn:#f0c46a; --warn-soft:#33290f;
+    --d1:#1f5c45; --d2:#2c5a3b; --d3:#4a4a30; --d4:#6a4130; --d5:#7f3a33; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1612; --surface:#15201a; --ink:#e7f0ea; --muted:#9bb0a5; --line:#25342b;
+  --accent:#4cc08c; --accent-soft:#17342a; --pitch:#122a20; --pitch-line:#24493a;
+  --capt:#e7f0ea; --capt-ink:#0e1612; --warn:#f0c46a; --warn-soft:#33290f;
+  --d1:#1f5c45; --d2:#2c5a3b; --d3:#4a4a30; --d4:#6a4130; --d5:#7f3a33; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1,h2,h3{margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:-.02em}
+h2{font-size:20px;font-weight:650;letter-spacing:-.01em}
+h3{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+p{margin:0}
+a{color:var(--accent)}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.head{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:13px;color:var(--muted);letter-spacing:.04em}
+.lede{max-width:60ch;color:var(--muted)}
+.strip{display:flex;flex-wrap:wrap;gap:12px 36px;padding-top:18px;margin-top:6px;border-top:1px solid var(--line)}
+.strip div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.strip dt{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.strip dd{margin:0;font-size:17px;font-weight:600}
+.strip dd small{font-weight:400;color:var(--muted);font-size:13px}
+
+/* section frame */
+.sec{display:flex;flex-direction:column;gap:18px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+.sec-head p{color:var(--muted);font-size:14px;max-width:62ch}
+
+/* tabs */
+.tabs{display:inline-flex;gap:4px;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:10px;flex-wrap:wrap}
+.tab{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-weight:600;font-size:14px;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--accent);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tab[aria-selected="true"]{color:#0e1612}}
+:root[data-theme="dark"] .tab[aria-selected="true"]{color:#0e1612}
+
+/* plan */
+.plan{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:860px){.plan{grid-template-columns:minmax(0,1fr)}}
+.pitch{position:relative;background:var(--pitch);border:1px solid var(--pitch-line);border-radius:14px;padding:22px 10px 18px;
+  display:flex;flex-direction:column;gap:20px;overflow:hidden}
+.pitch::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--pitch-line)}
+.pitch::after{content:"";position:absolute;left:50%;top:50%;width:90px;height:90px;border:1px solid var(--pitch-line);border-radius:50%;transform:translate(-50%,-50%)}
+.row{position:relative;z-index:1;display:flex;justify-content:space-around;gap:6px}
+.pl{position:relative;flex:1 1 0;max-width:118px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;
+  padding:7px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;overflow:hidden}
+.pl b{font-size:12.5px;font-weight:650;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .fx{font-size:11px;color:var(--muted);white-space:nowrap}
+.pl .pts{font-family:var(--font-mono);font-size:15px;font-weight:500;margin-top:2px}
+.pl::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--fd,var(--line))}
+.cap{position:absolute;top:-1px;right:-1px;width:20px;height:20px;border-radius:0 9px 0 9px;background:var(--capt);color:var(--capt-ink);
+  font-size:11px;font-weight:700;display:grid;place-items:center}
+.side{display:flex;flex-direction:column;gap:18px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.kv{display:flex;flex-wrap:wrap;gap:6px 22px}
+.kv div{display:flex;flex-direction:column}
+.kv span{font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.kv strong{font-size:18px;font-weight:600}
+.tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-weight:550}
+.tr .out{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
+.tr .arrow{color:var(--accent)}
+.tr small{font-weight:400;color:var(--muted)}
+.bench{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bn{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;min-width:0}
+.bn i{font-style:normal;font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.bn b{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.bn span{font-family:var(--font-mono);font-size:13px}
+.note{font-size:13px;color:var(--muted)}
+.callout{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px}
+
+/* heatmap */
+.seg{display:inline-flex;gap:4px;padding:3px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.hm-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
+.hm th{font-size:12px;font-weight:600;color:var(--muted);text-align:center;padding:6px 2px;letter-spacing:.04em}
+.hm th:first-child,.hm td:first-child{text-align:left;padding-left:10px;position:sticky;left:0;background:var(--surface);z-index:1}
+.hm td.t{font-weight:650;font-size:13px;padding:0 10px 0 10px}
+.hm td.c{border-radius:6px;text-align:center;padding:7px 2px;font-size:12.5px;font-weight:550;background:var(--bg-c);color:var(--ink);white-space:nowrap}
+.hm td.c small{font-family:var(--font-mono);font-size:11px;opacity:.75;margin-left:3px}
+.legend{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);flex-wrap:wrap}
+.legend span.sw{width:22px;height:14px;border-radius:4px;display:inline-block}
+
+/* targets */
+.targets{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.tg{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 48px;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.tg:last-child{border-bottom:0}
+.tg b{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tg small{color:var(--muted);font-weight:400;margin-left:6px}
+.bar{height:8px;border-radius:4px;background:var(--accent-soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.tg .v{font-family:var(--font-mono);font-size:13px;text-align:right}
+@media (max-width:520px){.tg{grid-template-columns:minmax(0,110px) minmax(0,1fr) 44px;gap:8px}}
+
+/* inputs + method */
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px}
+.list{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.list li{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.pill{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);align-self:start;white-space:nowrap;margin-top:2px}
+.pill.out{background:var(--d5);border-color:transparent;color:#13201a}
+.pill.doubt{background:var(--d4);border-color:transparent;color:#13201a}
+.pill.susp{background:var(--d3);border-color:transparent;color:#13201a}
+.steps{counter-reset:s;display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
+.steps li{padding-left:0;font-size:14px}
+.steps b{display:block;font-weight:600}
+.foot{border-top:1px solid var(--line);padding-top:18px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px;max-width:80ch}
+@media (prefers-reduced-motion:no-preference){.tab,.pl{transition:background .15s,border-color .15s}}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <p class="eyebrow">Fantasy football planning · unofficial fan project</p>
+    <h1>Gameweek Planner</h1>
+    <p class="lede">A projected XI, transfers and fixture view for GW10 to GW12. It models every player's expected points from this season's results, fixtures, minutes and team news, then picks the best squad under the rules.</p>
+    <dl class="strip" id="strip"></dl>
+  </header>
+
+  <section class="sec" aria-labelledby="plan-h">
+    <div class="sec-head">
+      <h2 id="plan-h">The plan</h2>
+      <div class="tabs" role="tablist" aria-label="Gameweek" id="tabs"></div>
+    </div>
+    <div class="plan">
+      <div class="pitch" id="pitch" aria-label="Projected starting XI"></div>
+      <div class="side">
+        <div class="card" id="decisions"></div>
+        <div class="card"><h3>Bench, in order</h3><div class="bench" id="bench"></div></div>
+        <p class="note">Bar along the bottom of each player shows how hard the fixture is, from green (easy) to red (hard). Numbers are projected points for the week.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="hm-h">
+    <div class="sec-head">
+      <div>
+        <h2 id="hm-h">Fixture difficulty</h2>
+        <p>Next five gameweeks, easiest runs first. The model rating comes from each side's real results this season; the official rating is the FPL site's own.</p>
+      </div>
+      <div class="seg" role="tablist" aria-label="Rating source" id="seg"></div>
+    </div>
+    <div class="hm-wrap"><table class="hm" id="hm"></table></div>
+    <div class="legend"><span>Easier</span><span class="sw" style="background:var(--d1)"></span><span class="sw" style="background:var(--d2)"></span><span class="sw" style="background:var(--d3)"></span><span class="sw" style="background:var(--d4)"></span><span class="sw" style="background:var(--d5)"></span><span>Harder</span><span class="mono">· (H) home, (A) away</span></div>
+  </section>
+
+  <section class="sec" aria-labelledby="tg-h">
+    <div class="sec-head">
+      <div>
+        <h2 id="tg-h">Players to look at</h2>
+        <p>Highest projected points over GW10 to GW14, later weeks counting slightly less.</p>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Position" id="postabs"></div>
+    </div>
+    <div class="card"><div class="targets" id="targets"></div></div>
+  </section>
+
+  <section class="sec" aria-labelledby="in-h">
+    <h2 id="in-h">What goes into it</h2>
+    <div class="cols">
+      <div class="card">
+        <h3>Availability inputs this week</h3>
+        <ul class="list" id="news"></ul>
+        <p class="note">From public team news on 2 and 3 November: <a href="https://www.fantasyfootballscout.co.uk/2026/11/03/saliba-back-in-training-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Arsenal, Liverpool, City</a> and <a href="https://www.fantasyfootballscout.co.uk/2026/11/02/amad-dorgu-rashford-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Man Utd, Villa</a>. Check the latest press conferences before acting.</p>
+      </div>
+      <div class="card">
+        <h3>How the projection works</h3>
+        <ol class="steps">
+          <li><b>Team strength</b>Attack and defence ratings fitted to this season's results, adjusted for opponent, weighted to recent games and blended with expected goals.</li>
+          <li><b>Minutes</b>Season and last five matches, injury flags and rotation notes.</li>
+          <li><b>Points</b>FPL's scoring rules applied to chances created, clean-sheet odds, bonus and defensive actions.</li>
+          <li><b>Planning</b>One optimiser picks squad, captain, transfers and chip timing across three gameweeks, counting a 4-point cost for each extra transfer.</li>
+        </ol>
+        <div class="callout">Treat the numbers as a ranking more than a forecast. The model has not been backtested yet, and it probably rates defenders too highly.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p>Built with Python and the public FPL data feed. Unofficial: not affiliated with or endorsed by the Premier League or Fantasy Premier League. Projections are estimates for fun, not advice.</p>
+    <p>Data as of 4 November 2026, before the GW10 deadline.</p>
+  </footer>
+</div>
+
+<script>
+const D = {
+  gws: [10, 11, 12],
+  chips: "Bench Boost, Triple Captain, Free Hit and Wildcard used. Next set opens GW20.",
+  total: 214.1,
+  weeks: {
+    10: { proj: 71.1, ft: 1, hits: 0, cap: "Barry",
+      tr: [{out: "Wissa", outc: "NEW £6.0m", in: "Barry", inc: "EVE £5.6m"}],
+      xi: { GK: [["Verbruggen","BHA",4.6,4.61]],
+            DEF: [["De Cuyper","BHA",5.4,6.25],["Calafiori","ARS",5.9,6.21],["Van Hecke","TOT",5.0,5.75]],
+            MID: [["Tavernier","BOU",6.6,6.81],["Rogers","CHE",8.2,5.64],["Ødegaard","ARS",6.7,5.48],["Palmer","CHE",9.8,5.25]],
+            FWD: [["Barry","EVE",5.6,6.89],["Haaland","MCI",15.8,6.20],["N.Jackson","AVL",7.0,5.13]] },
+      bench: [["Kinsky","GK","TOT",4.19],["Konsa","DEF","ARS",4.83],["Kudus","MID","TOT",4.01],["Hall","DEF","NEW",3.60]] },
+    11: { proj: 73.0, ft: 1, hits: 0, cap: "Rudoni",
+      tr: [{out: "Kudus", outc: "TOT £6.6m", in: "Rudoni", inc: "COV £4.9m"}],
+      xi: { GK: [["Verbruggen","BHA",4.6,4.77]],
+            DEF: [["Van Hecke","TOT",5.0,6.58],["De Cuyper","BHA",5.4,6.24],["Calafiori","ARS",5.9,5.57]],
+            MID: [["Rudoni","COV",4.9,7.18],["Tavernier","BOU",6.6,6.59],["Rogers","CHE",8.2,5.66],["Palmer","CHE",9.8,5.28]],
+            FWD: [["Haaland","MCI",15.8,6.81],["N.Jackson","AVL",7.0,5.65],["Barry","EVE",5.6,5.54]] },
+      bench: [["Kinsky","GK","TOT",4.21],["Ødegaard","MID","ARS",5.05],["Konsa","DEF","ARS",4.47],["Hall","DEF","NEW",3.53]] },
+    12: { proj: 70.0, ft: 1, hits: 0, cap: "De Cuyper",
+      tr: [{out: "Hall", outc: "NEW £5.3m", in: "Vuskovic", inc: "BHA £5.2m"}],
+      xi: { GK: [["Verbruggen","BHA",4.6,5.08]],
+            DEF: [["De Cuyper","BHA",5.4,7.11],["Vuskovic","BHA",5.2,6.25],["Van Hecke","TOT",5.0,5.98],["Calafiori","ARS",5.9,5.28]],
+            MID: [["Tavernier","BOU",6.6,5.90],["Rudoni","COV",4.9,5.60],["Rogers","CHE",8.2,5.31]],
+            FWD: [["Barry","EVE",5.6,5.66],["N.Jackson","AVL",7.0,5.39],["Haaland","MCI",15.8,5.33]] },
+      bench: [["Kinsky","GK","TOT",4.14],["Ødegaard","MID","ARS",4.97],["Palmer","MID","CHE",4.97],["Konsa","DEF","ARS",4.27]] }
+  },
+  // team: [GW10..GW14] as OPP(venue)official/model
+  fx: {
+    BHA:["BRE(H)3/1","HUL(A)2/1","NEW(H)3/1","BOU(A)4/3","NFO(A)2/1"],
+    ARS:["HUL(H)2/1","NEW(A)3/1","MCI(H)4/2","BRE(A)4/3","TOT(A)3/3"],
+    CHE:["SUN(A)3/2","LEE(H)3/1","NFO(A)2/2","CRY(H)2/1","LIV(H)4/2"],
+    LIV:["CRY(A)2/2","MUN(H)3/1","EVE(A)3/3","SUN(H)2/1","CHE(A)4/4"],
+    BOU:["IPS(A)2/2","NFO(H)3/1","FUL(A)3/3","BHA(H)4/3","HUL(H)2/1"],
+    AVL:["MUN(A)3/3","SUN(H)2/1","IPS(A)2/3","EVE(H)3/2","CRY(H)2/1"],
+    TOT:["LEE(A)3/3","IPS(H)2/1","SUN(A)3/2","FUL(H)2/2","ARS(H)4/3"],
+    MCI:["NFO(A)2/2","FUL(H)2/1","ARS(A)5/4","LEE(H)3/1","BRE(A)4/4"],
+    BRE:["BHA(A)4/5","EVE(H)3/1","MUN(A)3/2","ARS(H)4/3","MCI(H)4/2"],
+    COV:["EVE(A)3/4","CRY(H)2/1","LEE(A)3/4","IPS(H)2/2","MUN(A)3/4"],
+    EVE:["COV(H)2/2","BRE(A)4/5","LIV(H)4/3","AVL(A)3/4","FUL(H)2/3"],
+    FUL:["NEW(H)3/1","MCI(A)5/5","BOU(H)3/3","TOT(A)3/4","EVE(A)3/3"],
+    LEE:["TOT(H)3/3","CHE(A)4/5","COV(H)2/2","MCI(A)5/5","IPS(H)2/2"],
+    MUN:["AVL(H)3/3","LIV(A)4/5","BRE(H)3/4","NEW(A)3/4","COV(H)2/2"],
+    IPS:["BOU(H)3/4","TOT(A)3/5","AVL(H)3/3","COV(A)2/4","LEE(A)3/4"],
+    NFO:["MCI(H)4/4","BOU(A)4/5","CHE(H)4/4","HUL(A)2/4","BHA(H)4/5"],
+    NEW:["FUL(A)3/5","ARS(H)4/5","BHA(A)4/5","MUN(H)3/2","SUN(H)2/2"],
+    HUL:["ARS(A)5/5","BHA(H)4/5","CRY(A)2/3","NFO(H)3/2","BOU(A)4/5"],
+    SUN:["CHE(H)4/4","AVL(A)3/5","TOT(H)3/4","LIV(A)4/5","NEW(A)3/4"],
+    CRY:["LIV(H)4/4","COV(A)2/5","HUL(H)2/3","CHE(A)4/5","AVL(A)3/5"]
+  },
+  fxGws: [10, 11, 12, 13, 14],
+  targets: {
+    GK:  [["Verbruggen","BHA",4.6,20.05],["Raya","ARS",6.2,19.35],["Kinsky","TOT",4.4,17.90],["Petrović","BOU",4.5,16.83],["A.Becker","LIV",5.5,16.12]],
+    DEF: [["De Cuyper","BHA",5.4,26.56],["Gabriel","ARS",8.0,26.19],["Van Hecke","TOT",5.0,25.69],["Vuskovic","BHA",5.2,24.08],["Calafiori","ARS",5.9,23.10],["Silva","BOU",5.1,23.04],["Hill","BOU",5.5,21.19],["Muharemović","LEE",5.1,19.62],["Jacquet","LIV",5.1,19.41],["Truffert","BOU",5.4,19.21]],
+    MID: [["Tavernier","BOU",6.6,27.54],["Rudoni","COV",4.9,26.64],["Mbeumo","MUN",7.9,25.13],["Rogers","CHE",8.2,24.45],["E.Le Fée","SUN",5.7,23.50],["Neto","CHE",6.6,23.47],["Iwobi","FUL",5.4,23.40],["McGinn","AVL",5.4,23.28],["Palmer","CHE",9.8,22.76],["Enciso","IPS",5.5,22.51]],
+    FWD: [["Haaland","MCI",15.8,26.61],["Barry","EVE",5.6,25.69],["Evanilson","BOU",6.4,25.44],["N.Jackson","AVL",7.0,23.27],["Thiago","BRE",7.8,22.69],["Isak","LIV",9.2,20.74],["Calvert-Lewin","LEE",6.1,20.28],["Gonzalo","FUL",5.9,18.88],["Kostoulas","BHA",5.8,18.30],["McBurnie","HUL",5.5,18.05]]
+  },
+  news: [
+    ["out","Saka (ARS), Semenyo (MCI)","Out, medium term"],
+    ["out","Gravenberch, Ekitiké, Bradley, Frimpong, Leoni (LIV)","All out"],
+    ["out","Shaw, Ugarte, Šeško (MUN)","Out, some long term"],
+    ["susp","L. Martínez (MUN), Cash (AVL)","Suspended for the Old Trafford game"],
+    ["doubt","Dorgu, Rashford (MUN), Wan-Bissaka (AVL)","Doubts, day by day"],
+    ["doubt","Saliba (ARS)","Back in training; may cut Konsa's minutes"]
+  ]
+};
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const parse = (cell) => { const m = /^(\w+)\((H|A)\)(\d)\/(\d)$/.exec(cell); return m ? {opp:m[1], ven:m[2], off:+m[3], mod:+m[4]} : null; };
+const fmt = (n) => n.toFixed(1);
+let gw = 10, rating = "mod", pos = "DEF";
+try { const h = location.hash.replace("#",""); if (/^gw1[0-2]$/.test(h)) gw = +h.slice(2); } catch (e) {}
+
+function strip() {
+  $("#strip").innerHTML =
+    `<div><dt>Free transfers</dt><dd>1 <small>per week</small></dd></div>` +
+    `<div><dt>Chips</dt><dd><small>${esc(D.chips)}</small></dd></div>` +
+    `<div><dt>Projected GW10 to GW12</dt><dd class="mono">${fmt(D.total)} <small>points, after captain</small></dd></div>`;
+}
+function tabs() {
+  $("#tabs").innerHTML = D.gws.map((g) => `<button class="tab" role="tab" id="t${g}" aria-selected="${g===gw}" data-gw="${g}">GW${g}</button>`).join("");
+  $("#tabs").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { gw = +b.dataset.gw; try { location.hash = "gw" + gw; } catch (e) {} plan(); tabs(); }));
+}
+function plan() {
+  const w = D.weeks[gw], i = gw - 10;
+  const node = (p, isBench) => {
+    const f = parse(D.fx[p[1]][i]);
+    const cap = p[0] === w.cap && !isBench ? `<span class="cap" title="Captain">C</span>` : "";
+    return `<div class="pl" title="${esc(p[0])} · ${p[1]} · £${p[2].toFixed(1)}m" style="--fd:var(--d${f.mod})">${cap}<b>${esc(p[0])}</b><span class="fx">${f.opp} (${f.ven})</span><span class="pts">${fmt(p[3])}</span></div>`;
+  };
+  $("#pitch").innerHTML = ["FWD","MID","DEF","GK"].map((k) => `<div class="row">${w.xi[k].map((p) => node(p)).join("")}</div>`).join("");
+  const cap = Object.values(w.xi).flat().find((p) => p[0] === w.cap);
+  $("#decisions").innerHTML =
+    `<h3>GW${gw} decisions</h3>` +
+    w.tr.map((t) => `<div class="tr"><span class="out">${esc(t.out)}</span><span class="arrow">→</span><span>${esc(t.in)}</span><small>${esc(t.outc)} to ${esc(t.inc)}</small></div>`).join("") +
+    `<div class="kv"><div><span>Captain</span><strong>${esc(w.cap)}</strong></div><div><span>Free transfers</span><strong class="mono">${w.ft}</strong></div><div><span>Hits</span><strong class="mono">${w.hits}</strong></div><div><span>Projected</span><strong class="mono">${fmt(w.proj)}</strong></div></div>` +
+    `<p class="note">Captain counts double: ${esc(w.cap)} projects ${fmt(cap[3])}, worth ${fmt(cap[3]*2)}.</p>`;
+  $("#bench").innerHTML = w.bench.map((b, n) => `<div class="bn"><i>${n+1}</i><b>${esc(b[0])}</b><span>${fmt(b[3])}</span></div>`).join("");
+}
+function heat() {
+  $("#seg").innerHTML = [["mod","Model rating"],["off","Official rating"]].map(([k,l]) => `<button class="tab" role="tab" aria-selected="${rating===k}" data-r="${k}">${l}</button>`).join("");
+  $("#seg").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { rating = b.dataset.r; heat(); }));
+  const teams = Object.keys(D.fx).map((t) => [t, D.fx[t].map(parse)]);
+  teams.sort((a, b) => a[1].reduce((s, f) => s + f[rating], 0) - b[1].reduce((s, f) => s + f[rating], 0));
+  $("#hm").innerHTML = `<thead><tr><th></th>${D.fxGws.map((g) => `<th>GW${g}</th>`).join("")}</tr></thead><tbody>` +
+    teams.map(([t, fs]) => `<tr><td class="t">${t}</td>${fs.map((f) => `<td class="c" style="--bg-c:var(--d${f[rating]})">${f.opp} (${f.ven})<small>${f[rating]}</small></td>`).join("")}</tr>`).join("") + `</tbody>`;
+}
+function targets() {
+  $("#postabs").innerHTML = ["GK","DEF","MID","FWD"].map((k) => `<button class="tab" role="tab" aria-selected="${pos===k}" data-p="${k}">${k}</button>`).join("");
+  $("#postabs").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { pos = b.dataset.p; targets(); }));
+  const rows = D.targets[pos], max = Math.max(...rows.map((r) => r[3]));
+  $("#targets").innerHTML = rows.map((r) => `<div class="tg"><b>${esc(r[0])}<small>${r[1]} · £${r[2].toFixed(1)}m</small></b><div class="bar"><i style="width:${(r[3]/max*100).toFixed(1)}%"></i></div><span class="v">${fmt(r[3])}</span></div>`).join("");
+}
+function news() {
+  const lab = {out:"Out", doubt:"Doubt", susp:"Suspended"};
+  $("#news").innerHTML = D.news.map((n) => `<li><span class="pill ${n[0]}">${lab[n[0]]}</span><span><b>${esc(n[1])}</b><br><span class="muted">${esc(n[2])}</span></span></li>`).join("");
+}
+window.addEventListener("hashchange", () => { try { const h = location.hash.replace("#",""); if (/^gw1[0-2]$/.test(h)) { gw = +h.slice(2); plan(); tabs(); } } catch (e) {} });
+strip(); tabs(); plan(); heat(); targets(); news();
+</script>
+
+</body>
+</html>
