@@ -45,9 +45,9 @@
   --d1:#1f5c45; --d2:#2c5a3b; --d3:#4a4a30; --d4:#6a4130; --d5:#7f3a33; color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;
-  padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;margin:0;padding:0}
+.gut{max-width:1088px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{padding-block:28px 24px}
 h1,h2,h3{margin:0;line-height:1.15;text-wrap:balance}
 h1{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:-.02em}
 h2{font-size:20px;font-weight:650;letter-spacing:-.01em}
@@ -149,7 +149,8 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
 .steps{counter-reset:s;display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
 .steps li{padding-left:0;font-size:14px}
 .steps b{display:block;font-weight:600}
-.foot{border-top:1px solid var(--line);padding-top:18px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px;max-width:80ch}
+.foot{padding-top:6px;padding-bottom:40px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.foot p{max-width:80ch}
 @media (prefers-reduced-motion:no-preference){.tab,.pl{transition:background .15s,border-color .15s}}
 
 /* team form */
@@ -183,19 +184,79 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
 .acc .m{font-family:var(--font-mono);text-align:right}
 .acc .h.r{text-align:right}
 .acc .me{font-weight:650}
+
+/* app shell: sticky top bar on desktop, thumb-reach tab bar on phones */
+.skip{position:absolute;left:-999px;top:8px;background:var(--surface);padding:8px 12px;border-radius:8px;z-index:50}
+.skip:focus{left:16px}
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:18px;min-height:58px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.01em;color:var(--ink);text-decoration:none;white-space:nowrap}
+.brand i{width:22px;height:22px;border-radius:7px;background:var(--accent);display:grid;place-items:center}
+.brand i::after{content:"";width:10px;height:10px;border:2px solid var(--bg);border-radius:50%}
+.nav{display:flex;gap:2px;margin-left:8px}
+.nav a{display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted);text-decoration:none}
+.nav a svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav a:hover{color:var(--ink)}
+.nav a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.meta{margin-left:auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
+@media (max-width:980px){.meta{display:none}}
+@media (max-width:720px){
+  .top{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} /* backdrop-filter would trap the fixed tab bar inside the header */
+  .top-in{min-height:50px}
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;gap:0;background:var(--surface);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px))}
+  .nav a{flex:1 1 0;flex-direction:column;gap:3px;padding:6px 2px;font-size:11.5px;border-radius:10px;min-width:0}
+  .nav a svg{width:22px;height:22px}
+  .foot{padding-bottom:84px!important}
+}
+.view{display:flex;flex-direction:column;gap:22px}
+@media (prefers-reduced-motion:no-preference){.view:not([hidden]){animation:vin .22s ease-out}@keyframes vin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+.view-head{display:flex;flex-direction:column;gap:4px}
+.view-head p{color:var(--muted);font-size:14px;max-width:64ch}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:28px;align-items:center;padding:8px 0 4px}
+@media (max-width:860px){.hero{grid-template-columns:minmax(0,1fr);gap:18px}}
+.hero h1{margin:6px 0 10px}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line);padding:7px 14px;font-size:14px}
+:root[data-theme="dark"] .btn.ghost{color:var(--accent)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.ghost{color:var(--accent)}}
+.user-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
+.user-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* summary tiles */
+#user{display:flex;flex-direction:column;gap:18px}
+.tile strong.wrapit{font-size:16px;white-space:normal;line-height:1.25}
+@media (max-width:560px){.sum{grid-template-columns:repeat(2,minmax(0,1fr))!important}.tile:nth-child(4){grid-column:1/-1}.tile{padding:12px 14px}}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tile span{font-size:12px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.tile strong{font-size:22px;font-weight:650;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile strong.mono{font-weight:500}
+.tile small{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 
-<div class="wrap">
-  <header class="head">
-    <p class="eyebrow">Fantasy football planning · unofficial fan project</p>
-    <h1>Gameweek Planner</h1>
-    <p class="lede">Enter your team ID to get a projected XI, captain pick and the best transfer for the next three gameweeks. Every player's expected points come from this season's results, fixtures, minutes and team news.</p>
-    <dl class="strip" id="strip"></dl>
-  </header>
+<a class="skip" href="#main">Skip to content</a>
+<div class="top"><div class="top-in gut">
+  <a class="brand" href="#team"><i></i>Gameweek Planner</a>
+  <nav class="nav" id="nav" aria-label="Main">
+      <a href="#team" data-v="team"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg><span>My team</span></a>
+      <a href="#fixtures" data-v="fixtures"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 5V3M15 5V3"/></svg><span>Fixtures</span></a>
+      <a href="#players" data-v="players"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Players</span></a>
+      <a href="#insights" data-v="insights"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="3"/></svg><span>Insights</span></a>
+      <a href="#method" data-v="method"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/></svg><span>How it works</span></a>
+  </nav>
+  <span class="meta mono" id="meta"></span>
+</div></div>
 
-  <section class="sec" id="team-sec" aria-labelledby="team-h" hidden>
-    <h2 id="team-h">Your team</h2>
-    <form class="card form" id="form" autocomplete="off" novalidate>
+<main class="wrap gut" id="main">
+  <section class="view" id="v-team" aria-label="My team">
+    <div class="hero" id="hero">
+      <div>
+        <p class="eyebrow">Fantasy football planning · unofficial fan project</p>
+        <h1>Plan your next three gameweeks</h1>
+        <p class="lede" id="hero-lede">Enter your team ID for a projected XI, captain pick and the best transfer. Every player's expected points come from this season's results, fixtures, minutes and team news.</p>
+      </div>
+      <form class="card form" id="form" autocomplete="off" novalidate>
       <label for="tid" class="note">Your FPL team ID: the number in the address when you open your Points page, e.g. fantasy.premierleague.com/entry/<b>1234567</b>/event/10</label>
       <div class="form-row">
         <input class="inp mono" id="tid" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="1234567" aria-describedby="status">
@@ -204,67 +265,52 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
       <p class="note">It makes a read-only lookup of your public team page. Nothing is stored on a server; the ID is only remembered in your own browser.</p>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </form>
+    </div>
     <div id="user" hidden>
-      <div class="sec-head">
+      <div class="user-head">
         <div><h2 id="user-h"></h2><p class="note" id="user-note"></p></div>
-        <label class="note">Free transfers <select class="sel" id="ftsel"></select></label>
+        <div class="user-tools"><label class="note">Free transfers <select class="sel" id="ftsel"></select></label><button class="btn ghost" id="change" type="button">Change team</button></div>
       </div>
+      <div class="sum" id="sum"></div>
       <div id="user-plan"></div>
-      <div class="card" id="chips" style="margin-top:18px"></div>
+      <div class="card" id="chips"></div>
+    </div>
+    <div class="view" id="ex-sec" style="gap:14px">
+      <div class="view-head"><h2 id="plan-h">Example: a full three-week plan</h2>
+        <p>Output of the full optimiser for one squad (GW10 to GW12, 4 November), including free-transfer banking and chip timing. Enter your team ID above to replace this with your own.</p></div>
+      <div id="example"></div>
     </div>
   </section>
 
-  <section class="sec" id="ex-sec" aria-labelledby="plan-h">
+  <section class="view" id="v-fixtures" aria-label="Fixtures" hidden>
     <div class="sec-head">
-      <div>
-        <h2 id="plan-h">Example: a full three-week plan</h2>
-        <p>Output of the full optimiser for one squad (GW10 to GW12, 4 November), including free-transfer banking and chip timing. Enter your team ID above to replace this with your own.</p>
-      </div>
-    </div>
-    <div id="example"></div>
-  </section>
-
-  <section class="sec" aria-labelledby="hm-h">
-    <div class="sec-head">
-      <div>
-        <h2 id="hm-h">Fixture difficulty</h2>
-        <p>Easiest runs first. The model rating comes from each side's real results this season; the official rating is the FPL site's own.</p>
-      </div>
+      <div class="view-head"><h2 id="hm-h">Fixture difficulty</h2>
+        <p>Easiest runs first. The model rating comes from each side's real results this season; the official rating is the FPL site's own.</p></div>
       <div class="seg" role="tablist" aria-label="Rating source" id="seg"></div>
     </div>
     <div class="hm-wrap"><table class="hm" id="hm"></table></div>
     <div class="legend"><span>Easier</span><span class="sw" style="background:var(--d1)"></span><span class="sw" style="background:var(--d2)"></span><span class="sw" style="background:var(--d3)"></span><span class="sw" style="background:var(--d4)"></span><span class="sw" style="background:var(--d5)"></span><span>Harder</span><span class="mono">· (H) home, (A) away</span></div>
   </section>
 
-  <section class="sec" aria-labelledby="tg-h">
+  <section class="view" id="v-players" aria-label="Players" hidden>
     <div class="sec-head">
-      <div>
-        <h2 id="tg-h">Players to look at</h2>
-        <p id="tg-sub">Highest projected points over the next gameweeks, later weeks counting slightly less.</p>
-      </div>
+      <div class="view-head"><h2 id="tg-h">Players to look at</h2>
+        <p id="tg-sub">Highest projected points over the next gameweeks, later weeks counting slightly less.</p></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><div class="tabs" role="tablist" aria-label="Ownership" id="difftabs" hidden></div><div class="tabs" role="tablist" aria-label="Position" id="postabs"></div></div>
     </div>
     <div class="card"><div class="targets" id="targets"></div></div>
   </section>
 
-  <section class="sec" id="ins-sec" aria-labelledby="ins-h" hidden>
-    <div class="sec-head">
-      <div>
-        <h2 id="ins-h">Insights this week</h2>
-        <p>Captain options, where the market is moving, and who is scoring above or below what their chances justify.</p>
-      </div>
-    </div>
+  <section class="view" id="v-insights" aria-label="Insights" hidden>
+    <div class="view-head"><h2 id="ins-h">Insights this week</h2>
+      <p>Captain options, where the market is moving, and who is scoring above or below what their chances justify.</p></div>
     <div class="cols" id="ins"></div>
   </section>
 
-  <section class="sec" aria-labelledby="in-h">
-    <h2 id="in-h">What goes into it</h2>
+  <section class="view" id="v-method" aria-label="How it works" hidden>
+    <div class="view-head"><h2 id="in-h">How it works</h2>
+      <p>What goes into the projections, how the page picks your team, and how well it has done so far.</p></div>
     <div class="cols">
-      <div class="card">
-        <h3>Availability inputs</h3>
-        <ul class="list" id="news"></ul>
-        <p class="note">Hand-checked from public team news on 2 and 3 November: <a href="https://www.fantasyfootballscout.co.uk/2026/11/03/saliba-back-in-training-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Arsenal, Liverpool, City</a> and <a href="https://www.fantasyfootballscout.co.uk/2026/11/02/amad-dorgu-rashford-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Man Utd, Villa</a>. Check the latest press conferences before acting.</p>
-      </div>
       <div class="card">
         <h3>How the projection works</h3>
         <ol class="steps">
@@ -276,13 +322,19 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
         <div id="acc" hidden></div>
         <div class="callout" id="callout">Treat the numbers as a ranking more than a forecast. The model has not been backtested yet, and it probably rates defenders too highly. Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.</div>
       </div>
+      <div class="card">
+        <h3>Availability inputs</h3>
+        <ul class="list" id="news"></ul>
+        <p class="note">Hand-checked from public team news on 2 and 3 November: <a href="https://www.fantasyfootballscout.co.uk/2026/11/03/saliba-back-in-training-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Arsenal, Liverpool, City</a> and <a href="https://www.fantasyfootballscout.co.uk/2026/11/02/amad-dorgu-rashford-latest-fpl-team-news-pre-gameweek-10" target="_blank" rel="noopener">Man Utd, Villa</a>. Check the latest press conferences before acting.</p>
+      </div>
     </div>
   </section>
+</main>
 
-  <footer class="foot">
-    <p>Built with Python and the public FPL data feed. Unofficial: not affiliated with or endorsed by the Premier League or Fantasy Premier League. Projections are estimates for fun, not advice.</p>
-  </footer>
-</div>
+<footer class="foot gut">
+  <p>Built with Python and the public FPL data feed. Unofficial: not affiliated with or endorsed by the Premier League or Fantasy Premier League. Projections are estimates for fun, not advice.</p>
+  <p class="mono" id="foot-meta"></p>
+</footer>
 
 <script>
 const D = {
@@ -507,9 +559,7 @@ async function analyse(id) {
     $("#ftsel").innerHTML = [1,2,3,4,5].map((n) => `<option value="${n}"${n === STATE.ftEst ? " selected" : ""}>${n}${n === STATE.ftEst ? " (estimated)" : ""}</option>`).join("");
     setStatus("");
     renderUser();
-    $("#user").hidden = false;
-    $("#ex-sec").hidden = true; // your plan replaces the example
-    $("#user").scrollIntoView({behavior:"smooth", block:"start"});
+    showUser(true);
   } catch (e) {
     const m = {404:"No team found with that ID. Check the number in your FPL address.", early:"That team has no gameweek data yet.", squad:"Couldn't read a full 15-player squad for that team."}[e.status];
     setStatus(m || "Couldn't reach the FPL data just now. It can be slow or offline around deadlines; try again in a minute.", true);
@@ -536,6 +586,13 @@ function renderUser() {
   });
   const optRow = (o) => `<div class="${o === best ? "best" : ""}"><span>${o.n === 0 ? "Roll (no transfer)" : o.n + (o.n === 1 ? " transfer" : " transfers")}${o.hits ? ` · ${o.hits} hit${o.hits > 1 ? "s" : ""}` : ""}</span><span class="mono">${o.n === 0 ? "0.0" : (o.net >= 0 ? "+" : "") + fmt(o.net)}</span></div>`;
   const sideExtra = `<div class="card"><h3>Transfer options</h3><div class="opts">${res.opts.map(optRow).join("")}</div><p class="note">Net points over three gameweeks after hits. Using a free transfer also gives up about one point of banking value.</p></div>`;
+  const r0 = bestXI(final, 0), cap0 = r0.cap;
+  const moveTxt = best.m ? best.m.outs.map((o, k) => `${o.n} → ${best.m.ins[k].n}`).join(", ") : "Roll the transfer";
+  $("#sum").innerHTML =
+    `<div class="tile"><span>GW${g0} projected</span><strong class="mono">${fmt(r0.total - 4 * best.hits)}</strong><small>points, captain doubled</small></div>` +
+    `<div class="tile"><span>Captain</span><strong>${esc(cap0.n)}</strong><small>${fmt(cap0.ep[0])} projected, ${cap0.t}</small></div>` +
+    `<div class="tile"><span>Free transfers</span><strong class="mono">${ft}</strong><small>£${bank.toFixed(1)}m in the bank</small></div>` +
+    `<div class="tile"><span>Best move</span><strong class="wrapit" title="${esc(moveTxt)}">${esc(moveTxt)}</strong><small>${best.m ? `${best.net >= 0 ? "+" : ""}${fmt(best.net)} net over 3 gameweeks` : "no move beats keeping the transfer"}</small></div>`;
   $("#user-h").textContent = entry.name;
   $("#user-note").textContent = `Based on your GW${ev} squad, £${bank.toFixed(1)}m in the bank.`;
   mountPlan($("#user-plan"), {gws, weeks, fx:(t, i) => { const row = P.ticker.find((x) => x.t === t); return row ? parseCell(row.c[i]) : null; }, sideExtra});
@@ -602,7 +659,6 @@ function insights() {
     `<div class="card"><h3>Captain picks, GW${g0}</h3><div class="mini">${cap}</div><p class="note">Projected points for the captain, before doubling.</p></div>` +
     `<div class="card"><h3>Price pressure</h3><div class="mini"><h4>Being bought</h4>${risers.map(prRow).join("")}<h4>Being sold</h4>${fallers.map(prRow).join("")}</div><p class="note">Net transfers as a share of owners this gameweek. This is pressure, not a promise: FPL sets its own thresholds.</p></div>` +
     `<div class="card"><h3>Scoring versus expected</h3><div class="mini"><h4>Above expected, may cool</h4>${hot.map(fxRow).join("")}<h4>Below expected, may come good</h4>${cold.map(fxRow).join("")}</div><p class="note">Goals plus assists minus expected goals plus assists, players with 450+ minutes. The projections already use the expected numbers, not the results.</p></div>`;
-  $("#ins-sec").hidden = false;
 }
 function accuracy() {
   const a = P.accuracy, call = $("#callout");
@@ -619,19 +675,32 @@ function news() {
 }
 function strip() {
   const when = (iso) => { try { return new Date(iso).toLocaleString(undefined, {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}); } catch (e) { return ""; } };
-  $("#strip").innerHTML = P
-    ? `<div><dt>Projections updated</dt><dd class="mono">${esc(when(P.generated))}</dd></div><div><dt>Next deadline</dt><dd class="mono">${esc(when(P.deadline))} <small>GW${P.gws[0]}</small></dd></div><div><dt>Horizon</dt><dd class="mono">GW${P.gws[0]} to GW${P.gws[P.gws.length - 1]}</dd></div>`
-    : `<div><dt>Snapshot</dt><dd class="mono">4 Nov 2026 <small>GW10 to GW12</small></dd></div>`;
+  if (P) {
+    $("#meta").textContent = `GW${P.gws[0]} deadline ${when(P.deadline)}`;
+    $("#foot-meta").textContent = `Projections updated ${when(P.generated)} · GW${P.gws[0]} to GW${P.gws[P.gws.length - 1]}`;
+  } else { $("#foot-meta").textContent = "Snapshot of 4 Nov 2026, GW10 to GW12."; }
 }
+
+/* ---------- navigation */
+const VIEWS = ["team", "fixtures", "players", "insights", "method"];
+function route() {
+  let v = location.hash.replace("#", "");
+  if (!VIEWS.includes(v) || (v === "insights" && !P)) v = "team";
+  VIEWS.forEach((k) => { $("#v-" + k).hidden = k !== v; });
+  document.querySelectorAll("#nav a").forEach((a) => { if (a.dataset.v === v) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  window.scrollTo(0, 0);
+}
+function showUser(on) { $("#user").hidden = !on; $("#hero").hidden = on; $("#ex-sec").hidden = on; if (!on) $("#tid").focus(); }
 
 /* ---------- start */
 async function start() {
   try { const r = await fetch("projections.json", {cache:"no-cache"}); if (r.ok) P = await r.json(); } catch (e) {}
   strip(); mountExample(); heat(); targets(); news();
-  if (!P) return;
+  $('#nav a[data-v="insights"]').hidden = !P;
+  route(); window.addEventListener("hashchange", route);
+  if (!P) { $("#form").hidden = true; $("#hero-lede").textContent = "A projected XI, transfers and a fixture view, built from this season's results, minutes and team news."; return; }
   try { insights(); } catch (e) {}
   try { accuracy(); } catch (e) {}
-  $("#team-sec").hidden = false;
   try { const v = localStorage.getItem("fpl-team"); if (v) $("#tid").value = v; } catch (e) {}
   $("#form").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -640,6 +709,8 @@ async function start() {
     analyse(+v);
   });
   $("#ftsel").addEventListener("change", () => STATE && renderUser());
+  $("#change").addEventListener("click", () => showUser(false));
+  try { const v = localStorage.getItem("fpl-team"); if (v && /^\d{1,9}$/.test(v)) { setStatus("Loading your saved team…"); analyse(+v); } } catch (e) {}
 }
 start();
 </script>
