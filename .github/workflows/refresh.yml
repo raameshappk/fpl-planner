@@ -2,8 +2,9 @@ name: Refresh projections
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # every day at 06:00 UTC
-  workflow_dispatch:       # lets you run it by hand from the Actions tab
+    - cron: "0 6 * * *"    # every morning
+    - cron: "30 16 * * *"  # and in the afternoon, to catch late team news before evening deadlines
+  workflow_dispatch:        # run it by hand from the Actions tab, e.g. just before a deadline
 
 permissions:
   contents: write
@@ -18,11 +19,18 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Score finished gameweeks (live track record)
+        run: python track.py --score
+        continue-on-error: true
       - run: python fpl_forecast.py --export-dir . --export-only --news news_overrides.json
+      - name: Save this week's snapshot
+        run: python track.py --snapshot
+        continue-on-error: true
       - name: Commit if changed
         run: |
           git config user.name "projections-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add projections.json
+          git add projections.json tracker.json history
           git diff --cached --quiet || git commit -m "Refresh projections"
+          git pull --rebase
           git push

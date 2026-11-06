@@ -703,6 +703,7 @@ def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json
             "o": round(_f(r.get("selected_by_percent")), 1),
             "ti": int(_f(r.get("transfers_in_event"))), "to": int(_f(r.get("transfers_out_event"))),
             "m": int(_f(r.get("minutes"))),
+            "fe": round(_f(r.get("ep_next")), 2), "fo": round(_f(r.get("form")), 1),
             "gi": int(_f(r.get("goals_scored")) + _f(r.get("assists"))),
             "xgi": round(_f(r.get("expected_goals")) + _f(r.get("expected_assists")), 1),
         })
@@ -716,13 +717,14 @@ def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json
         "tp": int(bootstrap.get("total_players") or 0),
         "players": players,
     }
-    for ap_ in (accuracy_path, os.path.join(out_dir, "accuracy.json")):
-        if ap_ and os.path.exists(ap_):
-            try:
-                data["accuracy"] = json.load(open(ap_))
-                break
-            except Exception:
-                pass
+    for key, name in (("accuracy", accuracy_path), ("tracker", "tracker.json")):
+        for pth in (name, os.path.join(out_dir, os.path.basename(name))):
+            if pth and os.path.exists(pth):
+                try:
+                    data[key] = json.load(open(pth))
+                    break
+                except Exception:
+                    pass
     if CALIB:
         data["calibrated"] = True
     path = os.path.join(out_dir, "projections.json")

@@ -27,6 +27,8 @@
   --accent:#17734d; --accent-soft:#e1f1e9; --pitch:#e8f4ed; --pitch-line:#c4dccf;
   --capt:#13201a; --capt-ink:#ffffff; --warn:#8a5a00; --warn-soft:#fbf0d6;
   --d1:#b5e2cb; --d2:#d5ecce; --d3:#eeebcd; --d4:#f4d1bc; --d5:#eeaf9f;
+  --hero-a:#0a3a27; --hero-b:#15754c; --lime:#c9f26b; --stripe:rgba(23,115,77,.055);
+  --pitch-art:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%2317734d' stroke-opacity='.30' stroke-width='1.5'%3E%3Crect x='24' y='0' width='52' height='15' vector-effect='non-scaling-stroke'/%3E%3Crect x='38' y='0' width='24' height='6' vector-effect='non-scaling-stroke'/%3E%3Crect x='24' y='85' width='52' height='15' vector-effect='non-scaling-stroke'/%3E%3Crect x='38' y='94' width='24' height='6' vector-effect='non-scaling-stroke'/%3E%3C/g%3E%3C/svg%3E");
   --font-body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
@@ -36,6 +38,7 @@
     --accent:#4cc08c; --accent-soft:#17342a; --pitch:#122a20; --pitch-line:#24493a;
     --capt:#e7f0ea; --capt-ink:#0e1612; --warn:#f0c46a; --warn-soft:#33290f;
     --d1:#1f5c45; --d2:#2c5a3b; --d3:#4a4a30; --d4:#6a4130; --d5:#7f3a33; color-scheme:dark;
+    --hero-a:#0b2f21; --hero-b:#14583a; --stripe:rgba(76,192,140,.06); --pitch-art:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%234cc08c' stroke-opacity='.32' stroke-width='1.5'%3E%3Crect x='24' y='0' width='52' height='15' vector-effect='non-scaling-stroke'/%3E%3Crect x='38' y='0' width='24' height='6' vector-effect='non-scaling-stroke'/%3E%3Crect x='24' y='85' width='52' height='15' vector-effect='non-scaling-stroke'/%3E%3Crect x='38' y='94' width='24' height='6' vector-effect='non-scaling-stroke'/%3E%3C/g%3E%3C/svg%3E");
   }
 }
 :root[data-theme="dark"]{
@@ -43,6 +46,7 @@
   --accent:#4cc08c; --accent-soft:#17342a; --pitch:#122a20; --pitch-line:#24493a;
   --capt:#e7f0ea; --capt-ink:#0e1612; --warn:#f0c46a; --warn-soft:#33290f;
   --d1:#1f5c45; --d2:#2c5a3b; --d3:#4a4a30; --d4:#6a4130; --d5:#7f3a33; color-scheme:dark;
+    --hero-a:#0b2f21; --hero-b:#14583a; --stripe:rgba(76,192,140,.06); --pitch-art:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%234cc08c' stroke-opacity='.32' stroke-width='1.5'%3E%3Crect x='24' y='0' width='52' height='15' vector-effect='non-scaling-stroke'/%3E%3Crect x='38' y='0' width='24' height='6' vector-effect='non-scaling-stroke'/%3E%3Crect x='24' y='85' width='52' height='15' vector-effect='non-scaling-stroke'/%3E%3Crect x='38' y='94' width='24' height='6' vector-effect='non-scaling-stroke'/%3E%3C/g%3E%3C/svg%3E");
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5;margin:0;padding:0}
@@ -233,6 +237,54 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
 .tile strong{font-size:22px;font-weight:650;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tile strong.mono{font-weight:500}
 .tile small{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* football touches: mown-grass stripes, pitch markings, a ball. All drawn here, no photos or badges. */
+body::before{content:"";position:absolute;left:0;right:0;top:0;height:460px;z-index:-1;pointer-events:none;
+  background:repeating-linear-gradient(90deg,var(--stripe) 0 80px,transparent 80px 160px);
+  -webkit-mask-image:linear-gradient(#000 0,transparent 100%);mask-image:linear-gradient(#000 0,transparent 100%)}
+body{position:relative;min-height:100vh}
+.hero{position:relative;isolation:isolate;overflow:hidden;color:#fff;border-radius:22px;padding:clamp(22px,4vw,40px);
+  background:radial-gradient(520px 260px at 12% -10%,rgba(201,242,107,.28),transparent 70%),linear-gradient(135deg,var(--hero-a),var(--hero-b))}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 64px,transparent 64px 128px)}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400' preserveAspectRatio='xMaxYMid slice'%3E%3Cg fill='none' stroke='white' stroke-opacity='.13' stroke-width='2'%3E%3Cline x1='430' y1='-10' x2='430' y2='410'/%3E%3Ccircle cx='430' cy='200' r='110'/%3E%3Crect x='510' y='110' width='120' height='180'/%3E%3Crect x='570' y='150' width='60' height='100'/%3E%3Cpath d='M510 160 A60 60 0 0 0 510 240'/%3E%3C/g%3E%3Ccircle cx='430' cy='200' r='4' fill='white' fill-opacity='.2'/%3E%3C/svg%3E") right center/cover no-repeat}
+.hero .eyebrow{color:rgba(255,255,255,.72)}
+.hero h1{color:#fff}
+.hero .lede{color:rgba(255,255,255,.82)}
+.hero .card{box-shadow:0 18px 40px -18px rgba(0,0,0,.55);border-color:transparent}
+.hero .ball{position:absolute;z-index:-1;width:150px;height:150px;right:-30px;bottom:-34px;transform:rotate(-14deg);filter:drop-shadow(0 12px 14px rgba(0,0,0,.35))}
+@media (max-width:860px){.hero .ball{width:84px;height:84px;right:-24px;bottom:auto;top:-24px}.hero .eyebrow{padding-right:52px}}
+.pitch{background-image:var(--pitch-art),repeating-linear-gradient(0deg,rgba(23,115,77,.055) 0 46px,transparent 46px 92px);background-size:100% 100%,auto}
+:root[data-theme="dark"] .pitch{background-image:var(--pitch-art),repeating-linear-gradient(0deg,rgba(76,192,140,.07) 0 46px,transparent 46px 92px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .pitch{background-image:var(--pitch-art),repeating-linear-gradient(0deg,rgba(76,192,140,.07) 0 46px,transparent 46px 92px)}}
+
+/* team banner (after lookup) */
+.user-head{position:relative;isolation:isolate;overflow:hidden;border-radius:18px;padding:18px 22px;color:#fff;
+  background:radial-gradient(380px 200px at 8% -30%,rgba(201,242,107,.25),transparent 70%),linear-gradient(135deg,var(--hero-a),var(--hero-b))}
+.user-head::before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 64px,transparent 64px 128px)}
+.user-head h2{color:#fff;font-size:24px}
+.user-head .note{color:rgba(255,255,255,.78)}
+.user-head .sel{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.32)}
+.user-head .sel option{color:#13201a;background:#fff}
+.user-head .btn.ghost{color:#fff;border-color:rgba(255,255,255,.4)}
+.user-head .btn.ghost:hover{background:rgba(255,255,255,.12)}
+.tile:first-child strong{color:var(--accent)}
+.view-head h2{display:flex;align-items:center;gap:10px}
+.view-head h2::before{content:"";width:6px;height:22px;border-radius:3px;background:linear-gradient(var(--accent),var(--lime))}
+
+/* chip planner + tracker */
+.chiptab{display:grid;grid-template-columns:minmax(92px,1.2fr) repeat(var(--n,5),minmax(0,1fr));gap:4px;font-size:13px;align-items:stretch}
+.chiptab .h{font-size:11.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;text-align:center;padding:2px 0;line-height:1.2}
+.chiptab .h small{display:block;color:var(--accent);font-weight:700;font-size:10.5px}
+.chiptab .cn{font-weight:600;display:flex;align-items:center}
+.chiptab .cv{border-radius:7px;text-align:center;padding:8px 0;font-family:var(--font-mono);background:color-mix(in srgb,var(--accent) calc(var(--k,0)*36%),var(--bg))}
+.chiptab .cv.no{color:var(--muted);background:transparent}
+.chiptab .cv.top{outline:2px solid var(--accent);font-weight:600}
+.vrd{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.vrd b{font-weight:650}
+.acc5{grid-template-columns:minmax(0,.6fr) minmax(0,.7fr) repeat(3,minmax(0,1fr))}
+.tinyck{display:flex;align-items:center;gap:6px;font-size:13px}
+.tinyck input{accent-color:var(--lime);width:16px;height:16px}
 </style>
 
 <a class="skip" href="#main">Skip to content</a>
@@ -251,6 +303,7 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
 <main class="wrap gut" id="main">
   <section class="view" id="v-team" aria-label="My team">
     <div class="hero" id="hero">
+      <svg class="ball" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="bc"><circle cx="50" cy="50" r="46"/></clipPath><radialGradient id="bg" cx="38%" cy="32%" r="80%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9e3dd"/></radialGradient></defs><circle cx="50" cy="50" r="46" fill="url(#bg)"/><g clip-path="url(#bc)" fill="#16241d"><path d="M66.5 27.3 L61.7 12.8 L74.1 3.8 L86.5 12.8 L81.7 27.3 Z"/><path d="M76.6 58.7 L89.0 49.7 L101.4 58.7 L96.6 73.2 L81.4 73.2 Z"/><path d="M50.0 78.0 L62.4 87.0 L57.6 101.5 L42.4 101.5 L37.6 87.0 Z"/><path d="M23.4 58.7 L18.6 73.2 L3.4 73.2 L-1.4 58.7 L11.0 49.7 Z"/><path d="M33.5 27.3 L18.3 27.3 L13.5 12.8 L25.9 3.8 L38.3 12.8 Z"/><path d="M50.0 37.0 L62.4 46.0 L57.6 60.5 L42.4 60.5 L37.6 46.0 Z"/></g><path d="M50.0 37.0 L66.5 27.3 M62.4 46.0 L76.6 58.7 M57.6 60.5 L50.0 78.0 M42.4 60.5 L23.4 58.7 M37.6 46.0 L33.5 27.3" stroke="#16241d" stroke-width="1.6" fill="none" clip-path="url(#bc)"/><circle cx="50" cy="50" r="46" fill="none" stroke="#16241d" stroke-opacity=".35" stroke-width="1.5"/></svg>
       <div>
         <p class="eyebrow">Fantasy football planning · unofficial fan project</p>
         <h1>Plan your next three gameweeks</h1>
@@ -269,7 +322,7 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
     <div id="user" hidden>
       <div class="user-head">
         <div><h2 id="user-h"></h2><p class="note" id="user-note"></p></div>
-        <div class="user-tools"><label class="note">Free transfers <select class="sel" id="ftsel"></select></label><button class="btn ghost" id="change" type="button">Change team</button></div>
+        <div class="user-tools"><label class="note">Free transfers <select class="sel" id="ftsel"></select></label><label class="note tinyck"><input type="checkbox" id="sharename" checked> team name</label><button class="btn ghost" id="share" type="button">Share image</button><button class="btn ghost" id="change" type="button">Change team</button></div>
       </div>
       <div class="sum" id="sum"></div>
       <div id="user-plan"></div>
@@ -437,6 +490,7 @@ function mountPlan(root, cfg) {
   root.innerHTML = `<div class="tabs" role="tablist" aria-label="Gameweek" style="margin-bottom:16px"></div><div class="plan"><div class="pitch" aria-label="Projected starting XI"></div><div class="side"><div class="card dec"></div><div class="card"><h3>Bench, in order</h3><div class="bench"></div></div>${cfg.sideExtra || ""}<p class="note">The bar under each player shows how hard that fixture is, from green (easy) to red (hard). Numbers are projected points for the week.</p></div></div>`;
   const draw = () => {
     const w = cfg.weeks[gw], i = cfg.gws.indexOf(gw);
+    root.dataset.gw = gw;
     $(".tabs", root).innerHTML = cfg.gws.map((g) => `<button class="tab" role="tab" aria-selected="${g === gw}" data-gw="${g}">GW${g}</button>`).join("");
     $(".tabs", root).querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { gw = +b.dataset.gw; draw(); }));
     const node = (p) => {
@@ -578,7 +632,7 @@ function renderUser() {
     const r = bestXI(final, i), xi = {GK:[], DEF:[], MID:[], FWD:[]};
     r.xi.forEach((p) => xi[p.p].push({...p, pts:p.ep[i]}));
     const o = {cap:r.cap.n, ft:i === 0 ? ft : "-", hits:i === 0 ? best.hits : 0, proj:r.total - 4 * (i === 0 ? best.hits : 0), capPts:r.cap.ep[i]};
-    weeks[g] = {xi, cap:r.cap.n, bench:r.bench.map((p) => ({n:p.n, pts:p.ep[i]})),
+    weeks[g] = {xi, proj:o.proj, cap:r.cap.n, bench:r.bench.map((p) => ({n:p.n, pts:p.ep[i]})),
       dec:i === 0 ? decHtml(`GW${g} decisions`, trs, {...o, noTr:"Roll the free transfer: no move clears the bar this week."})
                   : decHtml(`GW${g}`, [], {...o, noTr:"Squad held from the first week's decision."})};
     // pitch nodes must share identity with the captain check
@@ -596,22 +650,132 @@ function renderUser() {
   $("#user-h").textContent = entry.name;
   $("#user-note").textContent = `Based on your GW${ev} squad, £${bank.toFixed(1)}m in the bank.`;
   mountPlan($("#user-plan"), {gws, weeks, fx:(t, i) => { const row = P.ticker.find((x) => x.t === t); return row ? parseCell(row.c[i]) : null; }, sideExtra});
-  renderChips(hist, g0, bestXI(final, 0), ft);
+  STATE.view = {gws, weeks, name:entry.name, moveTxt, hasMove:!!best.m, net:best.net, ft};
+  renderChips(hist, final, bank);
 }
-function renderChips(hist, g0, r0) {
-  const used = hist.chips || [];
-  const left = P.chips.filter((w) => !used.some((u) => u.name === w.name && w.start <= u.event && u.event <= w.stop));
-  const lines = [];
-  for (const w of left.sort((a, b) => a.start - b.start)) {
-    const open = w.start <= g0 && g0 <= w.stop, name = CHIP_LABEL[w.name];
-    let txt = `${name}: playable GW${w.start} to GW${w.stop}.`;
-    if (open && w.name === "bboost") txt = `${name}: this week it adds about ${fmt(r0.benchPts)} bench points. ${r0.benchPts > CHIP_COST.bboost ? "Worth a look." : "Not worth spending yet; a double gameweek usually beats this."}`;
-    else if (open && w.name === "3xc") txt = `${name}: adds about ${fmt(r0.cap.ep[0])} points on ${r0.cap.n}. ${r0.cap.ep[0] > CHIP_COST["3xc"] ? "Worth a look." : "Not worth spending yet; save it for a double gameweek."}`;
-    else if (open) txt = `${name}: available now. Needs the full planner to judge (the script on GitHub).`;
-    lines.push(`<div>${esc(txt)}</div>`);
+const CHIP_ORDER = ["bboost", "3xc", "wildcard", "freehit"], CHIP_WORTH = {bboost:12, "3xc":8, wildcard:12, freehit:15};
+const idxScore = (squad, idxs, ws) => idxs.reduce((sum, i, k) => { const r = bestXI(squad, i); return sum + (ws ? ws[k] : 1) * (r.total + 0.1 * r.benchPts); }, 0);
+/* Greedy hill-climb: repeatedly make the single swap that adds most, within budget and the 3-per-club rule.
+   Stands in for an unlimited-transfer optimiser (Free Hit / Wildcard). It finds a good squad, not always the best. */
+function climb(squad, bank, idxs, ws) {
+  const budget = squad.reduce((a, p) => a + p.c, 0) + bank;
+  const val = (p) => idxs.reduce((a, i, k) => a + (ws ? ws[k] : 1) * p.ep[i], 0);
+  const pool = {};
+  for (const k of POS) pool[k] = P.players.filter((p) => p.p === k).sort((a, b) => val(b) - val(a)).slice(0, 28);
+  let cur = squad.slice(), sc = idxScore(cur, idxs, ws);
+  for (let it = 0; it < 16; it++) {
+    const spent = cur.reduce((a, p) => a + p.c, 0), have = new Set(cur.map((p) => p.id));
+    let best = null;
+    for (const o of cur) for (const c of pool[o.p]) {
+      if (have.has(c.id) || spent - o.c + c.c > budget + 1e-9) continue;
+      const ns = cur.filter((x) => x !== o).concat(c);
+      if (!clubsOk(ns)) continue;
+      const v = idxScore(ns, idxs, ws);
+      if (!best || v > best.v) best = {ns, v};
+    }
+    if (!best || best.v - sc < 0.05) break;
+    cur = best.ns; sc = best.v;
   }
-  $("#chips").innerHTML = `<h3>Chips</h3><div class="chiprow">${lines.join("") || "<div>None left this season.</div>"}</div>` +
-    (used.length ? `<p class="note">Used: ${used.map((u) => `${CHIP_LABEL[u.name] || u.name} (GW${u.event})`).join(", ")}.</p>` : "");
+  return sc;
+}
+function chipGain(name, i, final, bank, H) {
+  if (name === "bboost") return bestXI(final, i).benchPts;
+  if (name === "3xc") return bestXI(final, i).cap.ep[i];
+  if (name === "freehit") return climb(final, bank, [i]) - idxScore(final, [i]);
+  const idxs = [i, i + 1, i + 2].filter((k) => k < H), ws = W3.slice(0, idxs.length);
+  return climb(final, bank, idxs, ws) - idxScore(final, idxs, ws);
+}
+function renderChips(hist, final, bank) {
+  const used = hist.chips || [], H = Math.min(5, P.gws.length), gws = P.gws.slice(0, H);
+  const left = P.chips.filter((w) => !used.some((u) => u.name === w.name && w.start <= u.event && u.event <= w.stop));
+  const dbl = gws.map((g, i) => ({g, d:P.ticker.filter((r) => /\+/.test(r.c[i] || "")).map((r) => r.t), b:P.ticker.filter((r) => (r.c[i] || "") === "BLANK").map((r) => r.t)}));
+  const flags = dbl.filter((x) => x.d.length || x.b.length).map((x) => `GW${x.g}: ${x.d.length ? "doubles " + x.d.join(", ") : ""}${x.d.length && x.b.length ? "; " : ""}${x.b.length ? "blanks " + x.b.join(", ") : ""}`);
+  const usedTxt = used.length ? `<p class="note">Used: ${used.map((u) => `${CHIP_LABEL[u.name] || u.name} (GW${u.event})`).join(", ")}.</p>` : "";
+  const flagTxt = `<p class="note">${flags.length ? "Doubles and blanks ahead. " + esc(flags.join(" · ")) : `No doubles or blanks announced for GW${gws[0]} to GW${gws[H - 1]}.`}</p>`;
+  const rows = CHIP_ORDER.map((n) => ({n, wins:left.filter((w) => w.name === n)})).filter((r) => r.wins.length);
+  const playable = (r, i) => r.wins.some((w) => w.start <= gws[i] && gws[i] <= w.stop);
+  const card = $("#chips");
+  if (!rows.some((r) => gws.some((_, i) => playable(r, i)))) {
+    const nxt = left.length ? Math.min(...left.map((w) => w.start)) : null;
+    card.innerHTML = `<h3>Chips</h3><p>${nxt ? `None of your chips can be played in GW${gws[0]} to GW${gws[H - 1]}. Your next set opens in GW${nxt}.` : "No chips left this season."}</p>${flagTxt}${usedTxt}`;
+    return;
+  }
+  card.innerHTML = `<h3>Chips</h3><p class="note">Working out the best week for each chip…</p>`;
+  setTimeout(() => {
+    const out = rows.map((r) => ({...r, vals:gws.map((_, i) => (playable(r, i) ? chipGain(r.n, i, final, bank, H) : null))}));
+    const head = `<span class="h"></span>` + dbl.map((x) => `<span class="h">GW${x.g}${x.d.length ? "<small>DOUBLES</small>" : x.b.length ? "<small>BLANKS</small>" : ""}</span>`).join("");
+    const grid = out.map((r) => {
+      const mx = Math.max(0.01, ...r.vals.filter((v) => v !== null)), top = r.vals.indexOf(Math.max(...r.vals.map((v) => (v === null ? -1e9 : v))));
+      return `<span class="cn">${CHIP_LABEL[r.n]}</span>` + r.vals.map((v, i) => v === null ? `<span class="cv no">–</span>` : `<span class="cv${i === top ? " top" : ""}" style="--k:${Math.max(0, v / mx).toFixed(2)}">${v >= 0 ? "+" : ""}${v.toFixed(1)}</span>`).join("");
+    }).join("");
+    const vr = out.map((r) => {
+      const best = Math.max(...r.vals.map((v) => (v === null ? -1e9 : v))), gw = gws[r.vals.indexOf(best)], worth = CHIP_WORTH[r.n];
+      return `<div><b>${CHIP_LABEL[r.n]}:</b> ${best >= worth ? `worth considering in GW${gw} (+${best.toFixed(1)}, against about ${worth} points it usually needs to beat)` : `best in this window is GW${gw} (+${best.toFixed(1)}), below the ~${worth} it usually needs. Save it for a double gameweek`}.</div>`;
+    }).join("");
+    card.innerHTML = `<h3>Chip planner</h3><div class="chiptab" style="--n:${H}">${head}${grid}</div><div class="vrd">${vr}</div>${flagTxt}<p class="note">Extra points if played that week, using your squad after the suggested transfer. Bench Boost and Triple Captain are exact for the squad; Wildcard (three-week gain) and Free Hit use a quick search for the best squad, so treat them as estimates.</p>${usedTxt}`;
+  }, 30);
+}
+
+
+/* ---------- share image (drawn in the browser, never uploaded) */
+function fitText(x, text, maxW) {
+  if (x.measureText(text).width <= maxW) return text;
+  while (text.length > 1 && x.measureText(text + "…").width > maxW) text = text.slice(0, -1);
+  return text + "…";
+}
+function rr(x, px, py, w, h, r) { x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath(); }
+function drawShare(v, gw, withName) {
+  const c = document.createElement("canvas"); c.width = 1200; c.height = 630;
+  const x = c.getContext("2d"), W = v.weeks[gw], first = gw === v.gws[0];
+  const F = '"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif', M = '"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace';
+  let g = x.createLinearGradient(0, 0, 1200, 630); g.addColorStop(0, "#0a3a27"); g.addColorStop(1, "#15754c"); x.fillStyle = g; x.fillRect(0, 0, 1200, 630);
+  x.fillStyle = "rgba(255,255,255,.045)"; for (let i = 0; i < 1200; i += 96) x.fillRect(i, 0, 48, 630);
+  g = x.createRadialGradient(140, 0, 0, 140, 0, 520); g.addColorStop(0, "rgba(201,242,107,.30)"); g.addColorStop(1, "rgba(201,242,107,0)"); x.fillStyle = g; x.fillRect(0, 0, 1200, 630);
+  x.textBaseline = "alphabetic";
+  x.fillStyle = "rgba(255,255,255,.7)"; x.font = `600 15px ${F}`; try { x.letterSpacing = "2px"; } catch (e) {}
+  x.fillText("GAMEWEEK PLANNER · UNOFFICIAL FAN PROJECT", 64, 76); try { x.letterSpacing = "0px"; } catch (e) {}
+  x.fillStyle = "#fff"; x.font = `700 66px ${F}`; x.fillText(`GW${gw} plan`, 64, 150);
+  if (withName) { x.fillStyle = "rgba(255,255,255,.85)"; x.font = `500 28px ${F}`; x.fillText(fitText(x, v.name, 520), 64, 196); }
+  x.fillStyle = "#c9f26b"; x.font = `500 118px ${M}`; x.fillText(W.proj.toFixed(1), 64, 336);
+  x.fillStyle = "rgba(255,255,255,.75)"; x.font = `500 22px ${F}`; x.fillText("projected points", 68, 372);
+  x.fillStyle = "rgba(255,255,255,.6)"; x.font = `600 14px ${F}`; try { x.letterSpacing = "2px"; } catch (e) {}
+  x.fillText("CAPTAIN", 66, 428); x.fillText(first ? "BEST MOVE" : "SQUAD", 66, 508); try { x.letterSpacing = "0px"; } catch (e) {}
+  x.fillStyle = "#fff"; x.font = `650 34px ${F}`; x.fillText(fitText(x, W.cap, 520), 64, 466);
+  x.font = `650 26px ${F}`; x.fillText(fitText(x, first ? v.moveTxt : "Held from week one", 540), 64, 544);
+  x.fillStyle = "rgba(255,255,255,.8)"; x.font = `500 18px ${M}`; x.fillText("raameshappk.github.io/fpl-planner", 64, 598);
+  // pitch
+  const px = 640, py = 36, pw = 524, ph = 558;
+  rr(x, px, py, pw, ph, 22); x.fillStyle = "rgba(255,255,255,.07)"; x.fill(); x.strokeStyle = "rgba(255,255,255,.28)"; x.lineWidth = 2; x.stroke();
+  x.beginPath(); x.moveTo(px, py + ph / 2); x.lineTo(px + pw, py + ph / 2); x.moveTo(px + pw / 2 + 56, py + ph / 2); x.arc(px + pw / 2, py + ph / 2, 56, 0, Math.PI * 2);
+  x.rect(px + 130, py, pw - 260, 80); x.rect(px + 190, py, pw - 380, 34); x.rect(px + 130, py + ph - 80, pw - 260, 80); x.rect(px + 190, py + ph - 34, pw - 380, 34);
+  x.strokeStyle = "rgba(255,255,255,.2)"; x.lineWidth = 1.5; x.stroke();
+  const rows = ["FWD", "MID", "DEF", "GK"], cw = 92, ch = 64, gap = 8;
+  rows.forEach((k, r) => {
+    const list = W.xi[k], tot = list.length * cw + (list.length - 1) * gap, y = py + 62 + r * 130;
+    list.forEach((p, i) => {
+      const cx = px + (pw - tot) / 2 + i * (cw + gap);
+      rr(x, cx, y, cw, ch, 10); x.fillStyle = "#fff"; x.fill();
+      x.fillStyle = "#13201a"; x.textAlign = "center"; x.font = `700 14.5px ${F}`; x.fillText(fitText(x, p.n, cw - 12), cx + cw / 2, y + 26);
+      x.font = `500 17px ${M}`; x.fillText(p.pts.toFixed(1), cx + cw / 2, y + 51);
+      if (p.n === W.cap) { x.beginPath(); x.arc(cx + cw - 6, y + 6, 11, 0, Math.PI * 2); x.fillStyle = "#13201a"; x.fill(); x.fillStyle = "#fff"; x.font = `700 12px ${F}`; x.fillText("C", cx + cw - 6, y + 10); }
+      x.textAlign = "left";
+    });
+  });
+  return c;
+}
+async function shareImage() {
+  if (!STATE || !STATE.view) return;
+  const btn = $("#share"), label = btn.textContent; btn.disabled = true; btn.textContent = "Preparing…";
+  try {
+    try { await Promise.all([document.fonts.load('700 20px "Hanken Grotesk"'), document.fonts.load('500 20px "IBM Plex Mono"')]); } catch (e) {}
+    const gw = +$("#user-plan").dataset.gw || STATE.view.gws[0];
+    const c = drawShare(STATE.view, gw, $("#sharename").checked);
+    const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+    const file = new File([blob], `gameweek-plan-gw${gw}.png`, {type:"image/png"});
+    if (navigator.canShare && navigator.canShare({files:[file]})) { try { await navigator.share({files:[file], title:`GW${gw} plan`}); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  } finally { btn.disabled = false; btn.textContent = label; }
 }
 
 /* ---------- heatmap and targets */
@@ -661,13 +825,24 @@ function insights() {
     `<div class="card"><h3>Scoring versus expected</h3><div class="mini"><h4>Above expected, may cool</h4>${hot.map(fxRow).join("")}<h4>Below expected, may come good</h4>${cold.map(fxRow).join("")}</div><p class="note">Goals plus assists minus expected goals plus assists, players with 450+ minutes. The projections already use the expected numbers, not the results.</p></div>`;
 }
 function accuracy() {
-  const a = P.accuracy, call = $("#callout");
-  let tail = "Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.";
-  if (!a) return;
-  const row = (name, m, me) => `<span class="${me ? "me" : ""}">${name}</span><span class="m ${me ? "me" : ""}">${m.mae.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.rho.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.top.toFixed(1)}</span>`;
-  $("#acc").hidden = false;
-  $("#acc").innerHTML = `<h3 style="margin-bottom:8px">Backtest, GW${a.gws[0]} to GW${a.gws[1]}</h3><div class="acc"><span class="h"></span><span class="h r">Avg error</span><span class="h r">Rank corr.</span><span class="h r">Top-10 avg</span>${row("This model", a.calibrated || a.model, true)}${row("Last-5 average", a.form)}${row("Season average", a.season)}</div><p class="note" style="margin-bottom:10px">${a.n.toLocaleString()} player-games of regular starters, each projected using only what was known before that gameweek. Avg error is points per player per gameweek (lower is better); rank correlation and top-10 average are higher-is-better. It is an early, small sample and it cannot see past injuries, so read it as indicative.</p>`;
-  call.textContent = "Treat the numbers as a ranking more than a forecast. " + tail;
+  const a = P.accuracy, t = P.tracker, call = $("#callout");
+  let html = "";
+  if (a) {
+    const row = (name, m, me) => `<span class="${me ? "me" : ""}">${name}</span><span class="m ${me ? "me" : ""}">${m.mae.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.rho.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.top.toFixed(1)}</span>`;
+    html += `<h3 style="margin-bottom:8px">Backtest, GW${a.gws[0]} to GW${a.gws[1]}</h3><div class="acc"><span class="h"></span><span class="h r">Avg error</span><span class="h r">Rank corr.</span><span class="h r">Top-10 avg</span>${row("This model", a.calibrated || a.model, true)}${row("Last-5 average", a.form)}${row("Season average", a.season)}</div><p class="note" style="margin-bottom:14px">${a.n.toLocaleString()} player-games of regular starters, each projected using only what was known before that gameweek. Avg error is points per player per gameweek (lower is better); rank correlation and top-10 average are higher-is-better. It is an early, small sample and it cannot see past injuries, so read it as indicative.</p>`;
+  }
+  if (t) {
+    if (!t.gws || !t.gws.length) {
+      html += `<h3 style="margin-bottom:8px">Live track record</h3><p class="note" style="margin-bottom:14px">Tracking started with GW${t.since || P.gws[0]}. Each week's projections are saved before the deadline and scored after the matches, with FPL's own expected points as the benchmark. The first result appears once that gameweek finishes.</p>`;
+    } else {
+      const better = (m, o) => (m.mae <= o.mae ? "me" : "");
+      const row = (label, n, m, f) => `<span class="${better(m, f) ? "me" : ""}">${label}</span><span class="m">${n}</span><span class="m ${better(m, f)}">${m.mae.toFixed(2)}</span><span class="m ${better(f, m)}">${f.mae.toFixed(2)}</span><span class="m">${m.rho.toFixed(2)} / ${f.rho.toFixed(2)}</span>`;
+      html += `<h3 style="margin-bottom:8px">Live track record</h3><div class="acc acc5"><span class="h"></span><span class="h r">Players</span><span class="h r">Our error</span><span class="h r">FPL's own</span><span class="h r">Rank corr.</span>${t.gws.slice(-6).map((g) => row("GW" + g.gw, g.n, g.model, g.fpl)).join("")}${t.total && t.gws.length > 1 ? row("All", t.total.n, t.total.model, t.total.fpl) : ""}</div><p class="note" style="margin-bottom:14px">Real, forward-looking results: each gameweek's projections were saved before the deadline and scored afterwards. "FPL's own" is the official expected-points figure, a tough benchmark. Error is points per player (lower is better); rank correlation is ours / FPL's.</p>`;
+    }
+  }
+  if (!html) return;
+  $("#acc").hidden = false; $("#acc").innerHTML = html;
+  if (a) call.textContent = "Treat the numbers as a ranking more than a forecast. Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.";
 }
 function news() {
   const lab = {out:"Out", doubt:"Doubt", susp:"Suspended"};
@@ -710,6 +885,7 @@ async function start() {
   });
   $("#ftsel").addEventListener("change", () => STATE && renderUser());
   $("#change").addEventListener("click", () => showUser(false));
+  $("#share").addEventListener("click", shareImage);
   try { const v = localStorage.getItem("fpl-team"); if (v && /^\d{1,9}$/.test(v)) { setStatus("Loading your saved team…"); analyse(+v); } } catch (e) {}
 }
 start();
