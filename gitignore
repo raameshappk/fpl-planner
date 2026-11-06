@@ -1,3 +1,4 @@
 projections.csv
 history_cache.json
 __pycache__/
+backtest_cache.json

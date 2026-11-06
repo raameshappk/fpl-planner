@@ -169,6 +169,20 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
 .chiprow{display:flex;flex-direction:column;gap:3px;font-size:14px}
 .sub{margin-top:-6px}
 [hidden]{display:none!important}
+.mini{display:flex;flex-direction:column;gap:2px}
+.mini h4{margin:8px 0 2px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mini h4:first-child{margin-top:0}
+.mr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.mr:last-child{border-bottom:0}
+.mr b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mr small{color:var(--muted);font-size:12.5px}
+.mr .v{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right}
+.mr .sub2{grid-column:1/-1;color:var(--muted);font-size:12.5px;margin-top:-2px}
+.acc{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:4px 10px;font-size:13px;margin-bottom:10px}
+.acc span.h{color:var(--muted);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+.acc .m{font-family:var(--font-mono);text-align:right}
+.acc .h.r{text-align:right}
+.acc .me{font-weight:650}
 </style>
 
 <div class="wrap">
@@ -228,9 +242,19 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
         <h2 id="tg-h">Players to look at</h2>
         <p id="tg-sub">Highest projected points over the next gameweeks, later weeks counting slightly less.</p>
       </div>
-      <div class="tabs" role="tablist" aria-label="Position" id="postabs"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><div class="tabs" role="tablist" aria-label="Ownership" id="difftabs" hidden></div><div class="tabs" role="tablist" aria-label="Position" id="postabs"></div></div>
     </div>
     <div class="card"><div class="targets" id="targets"></div></div>
+  </section>
+
+  <section class="sec" id="ins-sec" aria-labelledby="ins-h" hidden>
+    <div class="sec-head">
+      <div>
+        <h2 id="ins-h">Insights this week</h2>
+        <p>Captain options, where the market is moving, and who is scoring above or below what their chances justify.</p>
+      </div>
+    </div>
+    <div class="cols" id="ins"></div>
   </section>
 
   <section class="sec" aria-labelledby="in-h">
@@ -249,7 +273,8 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
           <li><b>Points</b>FPL's scoring rules applied to chances created, clean-sheet odds, bonus and defensive actions.</li>
           <li><b>Your team</b>The page picks your best XI and captain, then tests every one and two player swap over three gameweeks, charging 4 points for each transfer beyond your free ones.</li>
         </ol>
-        <div class="callout">Treat the numbers as a ranking more than a forecast. The model has not been backtested yet, and it probably rates defenders too highly. Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.</div>
+        <div id="acc" hidden></div>
+        <div class="callout" id="callout">Treat the numbers as a ranking more than a forecast. The model has not been backtested yet, and it probably rates defenders too highly. Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.</div>
       </div>
     </div>
   </section>
@@ -335,7 +360,7 @@ const fmt = (n) => Number(n).toFixed(1);
 const POS = ["GK","DEF","MID","FWD"], W3 = [1, 0.92, 0.8464];
 const CHIP_LABEL = {wildcard:"Wildcard", freehit:"Free Hit", bboost:"Bench Boost", "3xc":"Triple Captain"};
 const CHIP_COST = {bboost:12, "3xc":8};
-let P = null, rating = "mod", pos = "DEF";
+let P = null, rating = "mod", pos = "DEF", diff = false;
 
 /* ---------- fixtures */
 function parseCell(c) {
@@ -546,14 +571,47 @@ function heat() {
 function targets() {
   $("#postabs").innerHTML = POS.map((k) => `<button class="tab" role="tab" aria-selected="${pos === k}" data-p="${k}">${k}</button>`).join("");
   $("#postabs").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { pos = b.dataset.p; targets(); }));
+  if (P) {
+    $("#difftabs").hidden = false;
+    $("#difftabs").innerHTML = [[false, "All"], [true, "Under 10% owned"]].map(([k, l]) => `<button class="tab" role="tab" aria-selected="${diff === k}" data-d="${k}">${l}</button>`).join("");
+    $("#difftabs").querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => { diff = b.dataset.d === "true"; targets(); }));
+  }
   let rows;
   if (P) {
     const n = Math.min(5, P.gws.length);
-    rows = P.players.filter((p) => p.p === pos && p.a >= 0.5).map((p) => [p.n, p.t, p.c, p.ep.slice(0, n).reduce((s, e, i) => s + e * Math.pow(0.92, i), 0)]).sort((a, b) => b[3] - a[3]).slice(0, 10);
-    $("#tg-sub").textContent = `Highest projected points over GW${P.gws[0]} to GW${P.gws[n - 1]}, later weeks counting slightly less. Players doubtful for the next gameweek are left out.`;
+    rows = P.players.filter((p) => p.p === pos && p.a >= 0.5 && (!diff || p.o < 10)).map((p) => [p.n, p.t, p.c, p.ep.slice(0, n).reduce((s, e, i) => s + e * Math.pow(0.92, i), 0)]).sort((a, b) => b[3] - a[3]).slice(0, 10);
+    $("#tg-sub").textContent = `Highest projected points over GW${P.gws[0]} to GW${P.gws[n - 1]}, later weeks counting slightly less. Players doubtful for the next gameweek are left out${diff ? "; only players under 10% owned" : ""}.`;
   } else rows = D.targets[pos];
-  const max = Math.max(...rows.map((r) => r[3]));
-  $("#targets").innerHTML = rows.map((r) => `<div class="tg"><b>${esc(r[0])}<small>${esc(r[1])} · £${r[2].toFixed(1)}m</small></b><div class="bar"><i style="width:${(r[3] / max * 100).toFixed(1)}%"></i></div><span class="v">${fmt(r[3])}</span></div>`).join("");
+  const max = Math.max(1, ...rows.map((r) => r[3]));
+  $("#targets").innerHTML = rows.map((r) => `<div class="tg"><b>${esc(r[0])}<small>${esc(r[1])} · £${r[2].toFixed(1)}m</small></b><div class="bar"><i style="width:${(r[3] / max * 100).toFixed(1)}%"></i></div><span class="v">${fmt(r[3])}</span></div>`).join("") || `<p class="note">No players match.</p>`;
+}
+function insights() {
+  const mr = (n, sub, v, extra) => `<div class="mr"><b>${esc(n)} <small>${esc(sub)}</small></b><span class="v">${v}</span>${extra ? `<span class="sub2">${esc(extra)}</span>` : ""}</div>`;
+  const g0 = P.gws[0], rowFor = (t) => P.ticker.find((x) => x.t === t);
+  const cap = P.players.filter((p) => p.a >= 0.5).sort((a, b) => b.ep[0] - a.ep[0]).slice(0, 6).map((p) => {
+    const c = rowFor(p.t) ? parseCell(rowFor(p.t).c[0]) : null;
+    return mr(p.n, p.t, fmt(p.ep[0]), `${c && !c.blank ? c.label : "No game"} · ${p.o.toFixed(1)}% owned`);
+  }).join("");
+  const pr = P.players.filter((p) => p.o >= 1 && P.tp).map((p) => ({p, net:p.ti - p.to, pct:(p.ti - p.to) / (p.o / 100 * P.tp) * 100}));
+  const risers = pr.slice().sort((a, b) => b.pct - a.pct).slice(0, 5), fallers = pr.slice().sort((a, b) => a.pct - b.pct).slice(0, 5);
+  const prRow = (x) => mr(x.p.n, `${x.p.t} · £${x.p.c.toFixed(1)}m`, `${x.pct >= 0 ? "+" : ""}${x.pct.toFixed(1)}%`, `${x.net >= 0 ? "+" : ""}${x.net.toLocaleString()} net transfers · ${x.p.o.toFixed(1)}% owned`);
+  const fx = P.players.filter((p) => p.m >= 450 && p.p !== "GK").map((p) => ({p, d:p.gi - p.xgi}));
+  const hot = fx.slice().sort((a, b) => b.d - a.d).slice(0, 4), cold = fx.slice().sort((a, b) => a.d - b.d).slice(0, 4);
+  const fxRow = (x) => mr(x.p.n, `${x.p.t} · ${x.p.p}`, `${x.d >= 0 ? "+" : ""}${x.d.toFixed(1)}`, `${x.p.gi} ${x.p.gi === 1 ? "goal or assist" : "goals and assists"} from ${x.p.xgi.toFixed(1)} expected`);
+  $("#ins").innerHTML =
+    `<div class="card"><h3>Captain picks, GW${g0}</h3><div class="mini">${cap}</div><p class="note">Projected points for the captain, before doubling.</p></div>` +
+    `<div class="card"><h3>Price pressure</h3><div class="mini"><h4>Being bought</h4>${risers.map(prRow).join("")}<h4>Being sold</h4>${fallers.map(prRow).join("")}</div><p class="note">Net transfers as a share of owners this gameweek. This is pressure, not a promise: FPL sets its own thresholds.</p></div>` +
+    `<div class="card"><h3>Scoring versus expected</h3><div class="mini"><h4>Above expected, may cool</h4>${hot.map(fxRow).join("")}<h4>Below expected, may come good</h4>${cold.map(fxRow).join("")}</div><p class="note">Goals plus assists minus expected goals plus assists, players with 450+ minutes. The projections already use the expected numbers, not the results.</p></div>`;
+  $("#ins-sec").hidden = false;
+}
+function accuracy() {
+  const a = P.accuracy, call = $("#callout");
+  let tail = "Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.";
+  if (!a) return;
+  const row = (name, m, me) => `<span class="${me ? "me" : ""}">${name}</span><span class="m ${me ? "me" : ""}">${m.mae.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.rho.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.top.toFixed(1)}</span>`;
+  $("#acc").hidden = false;
+  $("#acc").innerHTML = `<h3 style="margin-bottom:8px">Backtest, GW${a.gws[0]} to GW${a.gws[1]}</h3><div class="acc"><span class="h"></span><span class="h r">Avg error</span><span class="h r">Rank corr.</span><span class="h r">Top-10 avg</span>${row("This model", a.calibrated || a.model, true)}${row("Last-5 average", a.form)}${row("Season average", a.season)}</div><p class="note" style="margin-bottom:10px">${a.n.toLocaleString()} player-games of regular starters, each projected using only what was known before that gameweek. Avg error is points per player per gameweek (lower is better); rank correlation and top-10 average are higher-is-better. It is an early, small sample and it cannot see past injuries, so read it as indicative.</p>`;
+  call.textContent = "Treat the numbers as a ranking more than a forecast. " + tail;
 }
 function news() {
   const lab = {out:"Out", doubt:"Doubt", susp:"Suspended"};
@@ -571,6 +629,8 @@ async function start() {
   try { const r = await fetch("projections.json", {cache:"no-cache"}); if (r.ok) P = await r.json(); } catch (e) {}
   strip(); mountExample(); heat(); targets(); news();
   if (!P) return;
+  try { insights(); } catch (e) {}
+  try { accuracy(); } catch (e) {}
   $("#team-sec").hidden = false;
   try { const v = localStorage.getItem("fpl-team"); if (v) $("#tid").value = v; } catch (e) {}
   $("#form").addEventListener("submit", (e) => {

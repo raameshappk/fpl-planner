@@ -41,6 +41,7 @@ GOAL_PTS = {1: 10, 2: 6, 3: 5, 4: 4}
 CS_PTS = {1: 4, 2: 4, 3: 1, 4: 0}
 DC_THRESHOLD = {1: 99, 2: 10, 3: 12, 4: 12}  # defensive-contribution thresholds (2 pts)
 POS_NAME = {1: "GK", 2: "DEF", 3: "MID", 4: "FWD"}
+CALIB = {}  # per-position scale factors from backtest.py (calibration.json); empty = no adjustment
 PEN_ADD = {1: 0.04, 2: 0.01}      # extra expected goals per match for pen taker #1 / #2 (kept small:
                                   # per-90 xG already contains some penalty history)
 CORNER_ADD = {1: 0.02, 2: 0.01}   # extra expected assists per match for corner taker #1 / #2
@@ -347,7 +348,7 @@ def forecast(bootstrap, fixtures, horizon, S, overrides, recent, fdr_w):
                 am, lam = fixture_factors(r.team, opp, home, S, fdr, fdr_w)
                 total += fixture_points(r, am, lam, a)
                 txt.append(f"{short[opp]}({'H' if home else 'A'})")
-            vals.append(total)
+            vals.append(total * CALIB.get(POS_NAME[int(r.element_type)], 1.0))
             fx_txt.append("+".join(txt) if txt else "BLANK")
         p[f"gw{g}"] = np.nan_to_num(np.array(vals, dtype=float), nan=0.0, posinf=0.0, neginf=0.0)
         p[f"fx{g}"] = fx_txt
@@ -666,7 +667,27 @@ def show_ticker(rows, gws):
         print(f"{team:<5}" + "".join(f"{c:<17}" for c in cells))
 
 
-def export_site(p, gws, ticker, bootstrap, out_dir):
+def load_calibration(path):
+    """Read calibration.json written by backtest.py. 'none' or a missing file means no adjustment."""
+    CALIB.clear()
+    if not path or str(path).lower() == "none" or not os.path.exists(path):
+        return {}
+    try:
+        CALIB.update({k: float(v) for k, v in json.load(open(path))["scale"].items()})
+    except Exception as e:
+        print(f"  [calibration] could not read {path}: {e}")
+    return dict(CALIB)
+
+
+def _f(x):
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return 0.0
+    return v if v == v else 0.0  # NaN -> 0
+
+
+def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json"):
     """Write projections.json for the website: every player's projected points per gameweek, the fixture
     ticker (for the heatmap) and the chip windows. The page does the team-specific maths in the browser."""
     import datetime as dt
@@ -679,6 +700,11 @@ def export_site(p, gws, ticker, bootstrap, out_dir):
             "c": round(float(r["price"]), 1), "a": round(float(r["avail_now"]), 2),
             "s": str(r["status"]), "w": str(r.get("news", "") or "")[:90],
             "ep": [round(float(r[f"gw{g}"]), 2) for g in gws],
+            "o": round(_f(r.get("selected_by_percent")), 1),
+            "ti": int(_f(r.get("transfers_in_event"))), "to": int(_f(r.get("transfers_out_event"))),
+            "m": int(_f(r.get("minutes"))),
+            "gi": int(_f(r.get("goals_scored")) + _f(r.get("assists"))),
+            "xgi": round(_f(r.get("expected_goals")) + _f(r.get("expected_assists")), 1),
         })
     nxt = next((e for e in bootstrap["events"] if e["id"] == gws[0]), {})
     data = {
@@ -687,8 +713,18 @@ def export_site(p, gws, ticker, bootstrap, out_dir):
         "deadline": nxt.get("deadline_time"),
         "chips": chip_windows(bootstrap),
         "ticker": [{"t": t, "c": cells} for _, t, cells in ticker],
+        "tp": int(bootstrap.get("total_players") or 0),
         "players": players,
     }
+    for ap_ in (accuracy_path, os.path.join(out_dir, "accuracy.json")):
+        if ap_ and os.path.exists(ap_):
+            try:
+                data["accuracy"] = json.load(open(ap_))
+                break
+            except Exception:
+                pass
+    if CALIB:
+        data["calibrated"] = True
     path = os.path.join(out_dir, "projections.json")
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False, separators=(",", ":"))
@@ -717,6 +753,8 @@ def main():
     ap.add_argument("--no-deep", action="store_true", help="skip per-player recent-minutes download")
     ap.add_argument("--deep-n", type=int, default=150, help="how many top players get a rotation check")
     ap.add_argument("--no-lists", action="store_true", help="skip the top-10-per-position lists")
+    ap.add_argument("--calibration", default="calibration.json",
+                    help="per-position scale factors from backtest.py ('none' to switch off)")
     ap.add_argument("--export-dir", help="write projections.json for the website into this folder")
     ap.add_argument("--export-only", action="store_true", help="with --export-dir: export and stop (no planning)")
     args = ap.parse_args()
@@ -727,6 +765,9 @@ def main():
     if overrides:
         print(f"Loaded {len(overrides)} news overrides from {args.news}")
     S = team_strength(bootstrap, fixtures, args.prior_k, args.half_life)
+    cal = load_calibration(args.calibration)
+    if cal:
+        print("Calibration from backtest applied: " + ", ".join(f"{k} x{v:.2f}" for k, v in cal.items()))
 
     cur, bank, chips_used, hist, cur_ev = None, 0.0, None, None, None
     if args.team_id:
