@@ -687,7 +687,7 @@ def _f(x):
     return v if v == v else 0.0  # NaN -> 0
 
 
-def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json"):
+def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json", ml_info=None):
     """Write projections.json for the website: every player's projected points per gameweek, the fixture
     ticker (for the heatmap) and the chip windows. The page does the team-specific maths in the browser."""
     import datetime as dt
@@ -727,6 +727,8 @@ def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json
                     pass
     if CALIB:
         data["calibrated"] = True
+    if ml_info:
+        data["ml"] = ml_info
     path = os.path.join(out_dir, "projections.json")
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False, separators=(",", ":"))
@@ -757,6 +759,8 @@ def main():
     ap.add_argument("--no-lists", action="store_true", help="skip the top-10-per-position lists")
     ap.add_argument("--calibration", default="calibration.json",
                     help="per-position scale factors from backtest.py ('none' to switch off)")
+    ap.add_argument("--ml-blend", default="ml_blend.json",
+                    help="blend in the machine-learning model with the weight saved by 'ml_model.py backtest' ('none' disables)")
     ap.add_argument("--export-dir", help="write projections.json for the website into this folder")
     ap.add_argument("--export-only", action="store_true", help="with --export-dir: export and stop (no planning)")
     args = ap.parse_args()
@@ -787,10 +791,28 @@ def main():
         recent = fetch_recent(ids, stamp=f"fin{finished}")
         p, gws, ticker = forecast(bootstrap, fixtures, horizon, S, overrides, recent, args.fdr_weight)
 
+    ml_info = None
+    if args.ml_blend and args.ml_blend.lower() != "none" and os.path.exists(args.ml_blend):
+        try:
+            import ml_model
+            info = json.load(open(args.ml_blend))
+            w = float(info.get("w", 0))
+            if w > 0:
+                finished = sum(1 for e in bootstrap["events"] if e["finished"])
+                hist_all = ml_model.fetch_histories(bootstrap, get)
+                model, _ = ml_model.fit_final(bootstrap, hist_all)
+                mlp = ml_model.predict_upcoming(bootstrap, fixtures, hist_all, gws, model)
+                p = ml_model.blend_projection(p, gws, mlp, w, avail_for_gw)
+                ml_info = {"w": w, "gws": info.get("gws"), "n": info.get("n"), "physics": info.get("physics"),
+                           "ml": info.get("ml"), "blend": info.get("blend"),
+                           "form": info.get("form"), "season": info.get("season")}
+                print(f"Machine-learning model blended in (weight {w:.1f}, {len(mlp)} player-gameweeks covered).")
+        except Exception as ex:  # never let the ML layer break the daily refresh
+            print(f"ML blend skipped: {ex}")
     p.drop(columns=[c for c in p.columns if c.startswith("fx")]).round(3).to_csv("projections.csv")
     print(f"Projected GW{gws[0]}-GW{gws[-1]}. Saved projections.csv")
     if args.export_dir:
-        export_site(p, gws, ticker, bootstrap, args.export_dir)
+        export_site(p, gws, ticker, bootstrap, args.export_dir, ml_info=ml_info)
         if args.export_only:
             return
 

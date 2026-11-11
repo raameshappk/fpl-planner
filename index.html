@@ -370,6 +370,7 @@ body{position:relative;min-height:100vh}
           <li><b>Team strength</b>Attack and defence ratings fitted to this season's results, adjusted for opponent, weighted to recent games and blended with expected goals.</li>
           <li><b>Minutes</b>Season and last five matches, injury flags and rotation notes.</li>
           <li><b>Points</b>FPL's scoring rules applied to chances created, clean-sheet odds, bonus and defensive actions.</li>
+          <li id="ml-step" hidden><b>Machine learning</b>A gradient-boosted model, trained on past seasons and this one so far, predicts points from recent form, minutes, xG and opponent strength. Its forecast is blended with the points above.</li>
           <li><b>Your team</b>The page picks your best XI and captain, then tests every one and two player swap over three gameweeks, charging 4 points for each transfer beyond your free ones.</li>
         </ol>
         <div id="acc" hidden></div>
@@ -829,7 +830,7 @@ function accuracy() {
   let html = "";
   if (a) {
     const row = (name, m, me) => `<span class="${me ? "me" : ""}">${name}</span><span class="m ${me ? "me" : ""}">${m.mae.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.rho.toFixed(2)}</span><span class="m ${me ? "me" : ""}">${m.top.toFixed(1)}</span>`;
-    html += `<h3 style="margin-bottom:8px">Backtest, GW${a.gws[0]} to GW${a.gws[1]}</h3><div class="acc"><span class="h"></span><span class="h r">Avg error</span><span class="h r">Rank corr.</span><span class="h r">Top-10 avg</span>${row("This model", a.calibrated || a.model, true)}${row("Last-5 average", a.form)}${row("Season average", a.season)}</div><p class="note" style="margin-bottom:14px">${a.n.toLocaleString()} player-games of regular starters, each projected using only what was known before that gameweek. Avg error is points per player per gameweek (lower is better); rank correlation and top-10 average are higher-is-better. It is an early, small sample and it cannot see past injuries, so read it as indicative.</p>`;
+    html += `<h3 style="margin-bottom:8px">Backtest, GW${(P.ml && P.ml.gws || a.gws)[0]} to GW${(P.ml && P.ml.gws || a.gws)[1]}</h3><div class="acc"><span class="h"></span><span class="h r">Avg error</span><span class="h r">Rank corr.</span><span class="h r">Top-10 avg</span>${P.ml ? row("Blend (shown here)", P.ml.blend, true) + row("Physics model only", P.ml.physics) + row("Machine learning only", P.ml.ml) : row("This model", a.calibrated || a.model, true)}${row("Last-5 average", (P.ml && P.ml.form) || a.form)}${row("Season average", (P.ml && P.ml.season) || a.season)}</div><p class="note" style="margin-bottom:14px">${((P.ml && P.ml.n) || a.n).toLocaleString()} player-games of regular starters, each projected using only what was known before that gameweek. Avg error is points per player per gameweek (lower is better); rank correlation and top-10 average are higher-is-better. It is an early, small sample and it cannot see past injuries, so read it as indicative.</p>`;
   }
   if (t) {
     if (!t.gws || !t.gws.length) {
@@ -842,6 +843,7 @@ function accuracy() {
   }
   if (!html) return;
   $("#acc").hidden = false; $("#acc").innerHTML = html;
+  if (P.ml) $("#ml-step").hidden = false;
   if (a) call.textContent = "Treat the numbers as a ranking more than a forecast. Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.";
 }
 function news() {

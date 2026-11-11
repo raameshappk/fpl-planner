@@ -19,6 +19,14 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Keep downloaded data between runs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ml_data
+            backtest_cache.json
+          key: ml-${{ github.run_id }}
+          restore-keys: ml-
       - name: Score finished gameweeks (live track record)
         run: python track.py --score
         continue-on-error: true
@@ -36,5 +44,5 @@ jobs:
           done
           git diff --cached --quiet && { echo "Nothing changed."; exit 0; }
           git commit -m "Refresh projections"
-          git pull --rebase --autostash
+          git pull --rebase
           git push
