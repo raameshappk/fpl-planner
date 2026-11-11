@@ -44,5 +44,5 @@ jobs:
           done
           git diff --cached --quiet && { echo "Nothing changed."; exit 0; }
           git commit -m "Refresh projections"
-          git pull --rebase
+          git pull --rebase --autostash
           git push

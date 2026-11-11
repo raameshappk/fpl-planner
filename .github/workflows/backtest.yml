@@ -28,5 +28,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           for f in calibration.json accuracy.json ml_blend.json; do [ -e "$f" ] && git add "$f"; done
           git diff --cached --quiet || git commit -m "Update backtest"
-          git pull --rebase
+          git pull --rebase --autostash
           git push
