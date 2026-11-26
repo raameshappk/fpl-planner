@@ -356,7 +356,12 @@ body{position:relative;min-height:100vh}
 
   <section class="view" id="v-insights" aria-label="Insights" hidden>
     <div class="view-head"><h2 id="ins-h">Insights this week</h2>
-      <p>Captain options, where the market is moving, and who is scoring above or below what their chances justify.</p></div>
+      <p>The best squad money can buy this week, captain options, where the market is moving, and who is scoring above or below what their chances justify.</p></div>
+    <div class="view" id="b15-sec" style="gap:14px" hidden>
+      <div class="view-head"><h2 id="b15-h" style="font-size:20px">Best 15 from scratch</h2>
+        <p>The highest-scoring legal squad for each gameweek, ignoring your team and transfers, as if you had a Free Hit or Wildcard. £100m budget, 2 goalkeepers, 5 defenders, 5 midfielders, 3 forwards, no more than 3 from one club, and a valid formation. The optimiser solves this exactly, so no other legal squad projects more.</p></div>
+      <div id="b15"></div>
+    </div>
     <div class="cols" id="ins"></div>
   </section>
 
@@ -371,7 +376,7 @@ body{position:relative;min-height:100vh}
           <li><b>Minutes</b>Season and last five matches, injury flags and rotation notes.</li>
           <li><b>Points</b>FPL's scoring rules applied to chances created, clean-sheet odds, bonus and defensive actions.</li>
           <li id="ml-step" hidden><b>Machine learning</b>A gradient-boosted model, trained on past seasons and this one so far, predicts points from recent form, minutes, xG and opponent strength. Its forecast is blended with the points above.</li>
-          <li><b>Your team</b>The page picks your best XI and captain, then tests every one and two player swap over three gameweeks, charging 4 points for each transfer beyond your free ones.</li>
+          <li><b>Your team</b>The page picks your best XI and captain, then tests swaps over three gameweeks, from one move up to one more than your free transfers (at least two, at most five), charging 4 points for each transfer beyond your free ones.</li>
         </ol>
         <div id="acc" hidden></div>
         <div class="callout" id="callout">Treat the numbers as a ranking more than a forecast. The model has not been backtested yet, and it probably rates defenders too highly. Prices use current values, not your selling prices, and transfers you have already made for the coming gameweek are not visible.</div>
@@ -465,7 +470,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",
 const fmt = (n) => Number(n).toFixed(1);
 const POS = ["GK","DEF","MID","FWD"], W3 = [1, 0.92, 0.8464];
 const CHIP_LABEL = {wildcard:"Wildcard", freehit:"Free Hit", bboost:"Bench Boost", "3xc":"Triple Captain"};
-const CHIP_COST = {bboost:12, "3xc":8};
+const CHIP_COST = {bboost:12, "3xc":8}, FT_VALUE = 1.0;
 let P = null, rating = "mod", pos = "DEF", diff = false;
 
 /* ---------- fixtures */
@@ -557,24 +562,35 @@ function searchTransfers(squad, bank, ft) {
     singles.push({outs:[o], ins:[c], sc:score(ns)});
   }
   singles.sort((a, b) => b.sc - a.sc);
-  const top = singles.slice(0, 40), pairs = [];
-  for (let a = 0; a < top.length; a++) for (let b = a + 1; b < top.length; b++) {
-    const x = top[a], y = top[b];
-    if (x.outs[0] === y.outs[0] || x.ins[0] === y.ins[0]) continue;
-    const outs = [x.outs[0], y.outs[0]], ins = [x.ins[0], y.ins[0]];
-    if (bank + outs[0].c + outs[1].c - ins[0].c - ins[1].c < -1e-9) continue;
-    const ns = swap(squad, outs, ins);
-    if (!clubsOk(ns)) continue;
-    pairs.push({outs, ins, sc:score(ns)});
+  /* Look at every count up to one more than the free transfers (so one -4 hit is always on the table), at least 2,
+     at most 5. Combos are built by beam search: the best (n-1)-move sets are each extended by one of the top singles. */
+  const maxN = Math.min(5, Math.max(2, ft + 1)), top = singles.slice(0, 40), levels = [[], singles];
+  for (let n = 2; n <= maxN; n++) {
+    const prev = levels[n - 1].slice(0, n === 2 ? 40 : 20), seen = new Set(), next = [];
+    for (const x of prev) for (const y of top) {
+      const o = y.outs[0], c = y.ins[0];
+      if (x.outs.includes(o) || x.ins.some((p) => p.id === c.id)) continue;
+      const outs = [...x.outs, o], ins = [...x.ins, c];
+      const key = outs.map((p) => p.id).sort().join(",") + "|" + ins.map((p) => p.id).sort().join(",");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (bank + outs.reduce((s, p) => s + p.c, 0) - ins.reduce((s, p) => s + p.c, 0) < -1e-9) continue;
+      const ns = swap(squad, outs, ins);
+      if (!clubsOk(ns)) continue;
+      next.push({outs, ins, sc:score(ns)});
+    }
+    next.sort((a, b) => b.sc - a.sc);
+    levels.push(next);
   }
-  pairs.sort((a, b) => b.sc - a.sc);
+  // Free transfers carried into next week: min(unused + 1, 5). Each one lost by moving now is worth about FT_VALUE.
+  // At the cap of 5, rolling wastes a transfer, so the first move costs nothing.
+  const carry = (used) => Math.min(ft - used + 1, 5);
   const mk = (n, m) => {
-    const gain = m ? m.sc - base : 0, hits = Math.max(0, n - ft);
-    return {n, gain, hits, net:gain - 4 * hits - Math.min(n, ft) * 1.0, m};
+    const gain = m ? m.sc - base : 0, hits = Math.max(0, n - ft), bankCost = FT_VALUE * (carry(0) - carry(Math.min(n, ft)));
+    return {n, gain, hits, bankCost, net:gain - 4 * hits - bankCost, m};
   };
   const opts = [mk(0, null)];
-  if (singles[0]) opts.push(mk(1, singles[0]));
-  if (pairs[0]) opts.push(mk(2, pairs[0]));
+  for (let n = 1; n <= maxN; n++) if (levels[n] && levels[n][0]) opts.push(mk(n, levels[n][0]));
   const best = opts.reduce((a, b) => (b.net > a.net ? b : a));
   return {opts, best, base};
 }
@@ -604,13 +620,15 @@ async function analyse(id) {
     const [entry, hist] = await Promise.all([api(`/entry/${id}/`), api(`/entry/${id}/history/`)]);
     let ev = entry.current_event;
     if (!ev) throw Object.assign(new Error("no gameweek"), {status:"early"});
+    const ftEst = estFT(hist, ev); // count transfers up to the latest gameweek, before stepping back over a Free Hit
+
     if (ev > 1 && (hist.chips || []).some((c) => c.name === "freehit" && c.event === ev)) ev -= 1;
     const picks = await api(`/entry/${id}/event/${ev}/picks/`);
     const byId = new Map(P.players.map((p) => [p.id, p]));
     const squad = picks.picks.map((x) => byId.get(x.element)).filter(Boolean);
     if (squad.length !== 15) throw Object.assign(new Error("squad"), {status:"squad"});
     try { localStorage.setItem("fpl-team", String(id)); } catch (e) {}
-    STATE = {entry, hist, ev, squad, bank:picks.entry_history.bank / 10, ftEst:estFT(hist, ev)};
+    STATE = {entry, hist, ev, squad, bank:picks.entry_history.bank / 10, ftEst};
     $("#ftsel").innerHTML = [1,2,3,4,5].map((n) => `<option value="${n}"${n === STATE.ftEst ? " selected" : ""}>${n}${n === STATE.ftEst ? " (estimated)" : ""}</option>`).join("");
     setStatus("");
     renderUser();
@@ -634,13 +652,13 @@ function renderUser() {
     r.xi.forEach((p) => xi[p.p].push({...p, pts:p.ep[i]}));
     const o = {cap:r.cap.n, ft:i === 0 ? ft : "-", hits:i === 0 ? best.hits : 0, proj:r.total - 4 * (i === 0 ? best.hits : 0), capPts:r.cap.ep[i]};
     weeks[g] = {xi, proj:o.proj, cap:r.cap.n, bench:r.bench.map((p) => ({n:p.n, pts:p.ep[i]})),
-      dec:i === 0 ? decHtml(`GW${g} decisions`, trs, {...o, noTr:"Roll the free transfer: no move clears the bar this week."})
+      dec:i === 0 ? decHtml(`GW${g} decisions`, trs, {...o, noTr:ft >= 5 ? "No move gains points this week. You're at the 5 free-transfer cap, so rolling wastes one; a sideways move costs nothing." : "Roll the free transfer: no move clears the bar this week."})
                   : decHtml(`GW${g}`, [], {...o, noTr:"Squad held from the first week's decision."})};
     // pitch nodes must share identity with the captain check
     weeks[g].cap = r.cap.n;
   });
   const optRow = (o) => `<div class="${o === best ? "best" : ""}"><span>${o.n === 0 ? "Roll (no transfer)" : o.n + (o.n === 1 ? " transfer" : " transfers")}${o.hits ? ` · ${o.hits} hit${o.hits > 1 ? "s" : ""}` : ""}</span><span class="mono">${o.n === 0 ? "0.0" : (o.net >= 0 ? "+" : "") + fmt(o.net)}</span></div>`;
-  const sideExtra = `<div class="card"><h3>Transfer options</h3><div class="opts">${res.opts.map(optRow).join("")}</div><p class="note">Net points over three gameweeks after hits. Using a free transfer also gives up about one point of banking value.</p></div>`;
+  const sideExtra = `<div class="card"><h3>Transfer options</h3><div class="opts">${res.opts.map(optRow).join("")}</div><p class="note">Net points over three gameweeks after hits. Each free transfer used also gives up about one point of banking value, except a transfer that would be lost anyway at the 5-transfer cap. Up to ${Math.min(5, Math.max(2, ft + 1))} moves are checked with ${ft} free.</p></div>`;
   const r0 = bestXI(final, 0), cap0 = r0.cap;
   const moveTxt = best.m ? best.m.outs.map((o, k) => `${o.n} → ${best.m.ins[k].n}`).join(", ") : "Roll the transfer";
   $("#sum").innerHTML =
@@ -825,6 +843,26 @@ function insights() {
     `<div class="card"><h3>Price pressure</h3><div class="mini"><h4>Being bought</h4>${risers.map(prRow).join("")}<h4>Being sold</h4>${fallers.map(prRow).join("")}</div><p class="note">Net transfers as a share of owners this gameweek. This is pressure, not a promise: FPL sets its own thresholds.</p></div>` +
     `<div class="card"><h3>Scoring versus expected</h3><div class="mini"><h4>Above expected, may cool</h4>${hot.map(fxRow).join("")}<h4>Below expected, may come good</h4>${cold.map(fxRow).join("")}</div><p class="note">Goals plus assists minus expected goals plus assists, players with 450+ minutes. The projections already use the expected numbers, not the results.</p></div>`;
 }
+/* Best 15 from scratch: squads are solved exactly in fpl_forecast.py (best_fifteen) and shipped as ids per gameweek. */
+function bestSquad() {
+  if (!P.best15) return;
+  const byId = new Map(P.players.map((p) => [p.id, p])), weeks = {}, gws = [];
+  for (const b of P.best15) {
+    const i = P.gws.indexOf(b.gw), sq = (b.ids || []).map((id) => byId.get(id)).filter(Boolean);
+    if (i < 0 || sq.length !== 15) continue;
+    const r = bestXI(sq, i), xi = {GK:[], DEF:[], MID:[], FWD:[]};
+    r.xi.forEach((p) => xi[p.p].push({...p, pts:p.ep[i]}));
+    const cost = sq.reduce((s, p) => s + p.c, 0);
+    gws.push(b.gw);
+    weeks[b.gw] = {xi, cap:r.cap.n, bench:r.bench.map((p) => ({n:p.n, pts:p.ep[i]})),
+      dec:`<h3>Best 15 for GW${b.gw}</h3>` +
+        `<div class="kv"><div><span>Projected</span><strong class="mono">${fmt(r.total)}</strong></div><div><span>Captain</span><strong>${esc(r.cap.n)}</strong></div><div><span>Formation</span><strong class="mono">${xi.DEF.length}-${xi.MID.length}-${xi.FWD.length}</strong></div><div><span>Cost</span><strong class="mono">£${cost.toFixed(1)}m</strong></div></div>` +
+        `<p class="note">Captain counts double: ${esc(r.cap.n)} projects ${fmt(r.cap.ep[i])}, worth ${fmt(r.cap.ep[i] * 2)}. £${Math.max(0, 100 - cost).toFixed(1)}m left over: spending it would not add projected points this week.</p>`};
+  }
+  if (!gws.length) return;
+  mountPlan($("#b15"), {gws, weeks, fx:(t, k) => { const row = P.ticker.find((x) => x.t === t); return row ? parseCell(row.c[P.gws.indexOf(gws[k])]) : null; }});
+  $("#b15-sec").hidden = false;
+}
 function accuracy() {
   const a = P.accuracy, t = P.tracker, call = $("#callout");
   let html = "";
@@ -877,6 +915,7 @@ async function start() {
   route(); window.addEventListener("hashchange", route);
   if (!P) { $("#form").hidden = true; $("#hero-lede").textContent = "A projected XI, transfers and a fixture view, built from this season's results, minutes and team news."; return; }
   try { insights(); } catch (e) {}
+  try { bestSquad(); } catch (e) {}
   try { accuracy(); } catch (e) {}
   try { const v = localStorage.getItem("fpl-team"); if (v) $("#tid").value = v; } catch (e) {}
   $("#form").addEventListener("submit", (e) => {

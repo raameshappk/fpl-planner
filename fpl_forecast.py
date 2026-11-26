@@ -687,6 +687,40 @@ def _f(x):
     return v if v == v else 0.0  # NaN -> 0
 
 
+def best_fifteen(players, i, budget=100.0, bench_w=0.1, time_limit=30):
+    """Best 15-player squad for one gameweek from scratch: no current team, no transfer limits (a Free Hit
+    or Wildcard view). `players` are export rows ({id, p, t, c, ep}); `i` indexes their `ep` list.
+    Maximises starting XI points + captain (counted twice) + bench_w * bench points, subject to the budget,
+    2 GK / 5 DEF / 5 MID / 3 FWD, at most 3 per club and a legal formation. Solved exactly as a MILP.
+    Returns the 15 ids, or None if the solver fails."""
+    rows = [r for r in players if r["ep"][i] > 0]
+    ids = [r["id"] for r in rows]
+    ep = {r["id"]: r["ep"][i] for r in rows}
+    prob = pulp.LpProblem(f"best15_{i}", pulp.LpMaximize)
+    x = {k: pulp.LpVariable(f"x_{k}", cat="Binary") for k in ids}   # in squad
+    s = {k: pulp.LpVariable(f"s_{k}", cat="Binary") for k in ids}   # starts
+    c = {k: pulp.LpVariable(f"c_{k}", cat="Binary") for k in ids}   # captain
+    prob += pulp.lpSum(ep[k] * (s[k] + c[k] + bench_w * (x[k] - s[k])) for k in ids)
+    prob += pulp.lpSum(x.values()) == 15
+    prob += pulp.lpSum(s.values()) == 11
+    prob += pulp.lpSum(c.values()) == 1
+    prob += pulp.lpSum(r["c"] * x[r["id"]] for r in rows) <= budget + 1e-6
+    for k in ids:
+        prob += s[k] <= x[k]
+        prob += c[k] <= s[k]
+    for pos, n, lo, hi in (("GK", 2, 1, 1), ("DEF", 5, 3, 5), ("MID", 5, 2, 5), ("FWD", 3, 1, 3)):
+        ks = [r["id"] for r in rows if r["p"] == pos]
+        prob += pulp.lpSum(x[k] for k in ks) == n
+        prob += pulp.lpSum(s[k] for k in ks) >= lo
+        prob += pulp.lpSum(s[k] for k in ks) <= hi
+    for t in {r["t"] for r in rows}:
+        prob += pulp.lpSum(x[r["id"]] for r in rows if r["t"] == t) <= 3
+    prob.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit))
+    if pulp.LpStatus[prob.status] != "Optimal":
+        return None
+    return sorted(k for k in ids if x[k].value() > 0.5)
+
+
 def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json", ml_info=None):
     """Write projections.json for the website: every player's projected points per gameweek, the fixture
     ticker (for the heatmap) and the chip windows. The page does the team-specific maths in the browser."""
@@ -717,6 +751,10 @@ def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json
         "tp": int(bootstrap.get("total_players") or 0),
         "players": players,
     }
+    try:  # best squad from scratch for each gameweek (Insights page)
+        data["best15"] = [{"gw": g, "ids": best_fifteen(players, k)} for k, g in enumerate(gws)]
+    except Exception as e:
+        print(f"Best-15 squads skipped: {e}")
     for key, name in (("accuracy", accuracy_path), ("tracker", "tracker.json")):
         for pth in (name, os.path.join(out_dir, os.path.basename(name))):
             if pth and os.path.exists(pth):
