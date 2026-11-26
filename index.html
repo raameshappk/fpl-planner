@@ -88,6 +88,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* plan */
 .plan{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:24px;align-items:start}
 @media (max-width:860px){.plan{grid-template-columns:minmax(0,1fr)}}
+/* side by side: the pitch grows to the height of the side column and spreads its lines, so no gap is left beneath it */
+@media (min-width:861px){.plan{align-items:stretch}.plan .pitch{justify-content:space-evenly;min-height:440px;padding-top:28px;padding-bottom:28px}}
 .pitch{position:relative;background:var(--pitch);border:1px solid var(--pitch-line);border-radius:14px;padding:22px 10px 18px;
   display:flex;flex-direction:column;gap:20px;overflow:hidden}
 .pitch::before{content:"";position:absolute;left:0;right:0;top:50%;border-top:1px solid var(--pitch-line)}
@@ -203,7 +205,19 @@ table.hm{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
 .nav a:hover{color:var(--ink)}
 .nav a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
 .meta{margin-left:auto;font-size:12.5px;color:var(--muted);white-space:nowrap}
-@media (max-width:980px){.meta{display:none}}
+.meta:empty{display:none}
+.meta.dl{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);
+  border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);font-family:inherit;font-size:13px;font-weight:600}
+.meta.dl svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.meta.dl .cd{font-family:var(--font-mono);font-weight:700;padding-left:8px;border-left:1px solid color-mix(in srgb,currentColor 35%,transparent)}
+.meta.dl.soon{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.meta.dl.soon svg{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.meta.dl.soon svg{animation:none}}
+@media (max-width:980px){.meta.dl .when{display:none}}
+.nav a{white-space:nowrap;padding-left:11px;padding-right:11px}
+.top-in{gap:14px}
+@media (min-width:721px) and (max-width:1060px){.nav a svg{display:none}.nav a{padding-left:9px;padding-right:9px}}
 @media (max-width:720px){
   .top{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)} /* backdrop-filter would trap the fixed tab bar inside the header */
   .top-in{min-height:50px}
@@ -888,10 +902,27 @@ function news() {
   const lab = {out:"Out", doubt:"Doubt", susp:"Suspended"};
   $("#news").innerHTML = D.news.map((n) => `<li><span class="pill ${n[0]}">${lab[n[0]]}</span><span><b>${esc(n[1])}</b><br><span class="muted">${esc(n[2])}</span></span></li>`).join("");
 }
+/* Deadline pill in the header: date plus a live countdown, amber in the final 24 hours. */
+function deadline() {
+  const el = $("#meta"), d = new Date(P.deadline), ms = d - Date.now(), g = P.gws[0];
+  if (!P.deadline || isNaN(d)) { el.textContent = ""; return; }
+  const m = Math.floor(ms / 60000), dd = Math.floor(m / 1440), hh = Math.floor((m % 1440) / 60), mm = m % 60;
+  const cd = ms <= 0 ? "passed" : dd ? `${dd}d ${hh}h` : hh ? `${hh}h ${mm}m` : `${mm}m`;
+  let when = "", full = "";
+  try {
+    full = d.toLocaleString(undefined, {weekday:"short", day:"numeric", month:"short", hour:"numeric", minute:"2-digit"});
+    // within the week the weekday is enough; further out, show the date
+    when = d.toLocaleString(undefined, ms < 6 * 864e5 ? {weekday:"short", hour:"numeric", minute:"2-digit"} : {day:"numeric", month:"short"});
+  } catch (e) {}
+  el.className = "meta dl" + (ms > 0 && ms < 864e5 ? " soon" : "");
+  el.title = `GW${g} deadline: ${full}`;
+  el.setAttribute("aria-label", `Gameweek ${g} deadline ${full},${ms <= 0 ? "passed" : "in " + cd}`);
+  el.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span>GW${g} deadline</span><span class="when">${esc(when)}</span><span class="cd">${ms <= 0 ? "passed" : esc(cd)}</span>`;
+}
 function strip() {
   const when = (iso) => { try { return new Date(iso).toLocaleString(undefined, {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}); } catch (e) { return ""; } };
   if (P) {
-    $("#meta").textContent = `GW${P.gws[0]} deadline ${when(P.deadline)}`;
+    deadline(); setInterval(deadline, 30000);
     $("#foot-meta").textContent = `Projections updated ${when(P.generated)} · GW${P.gws[0]} to GW${P.gws[P.gws.length - 1]}`;
   } else { $("#foot-meta").textContent = "Snapshot of 4 Nov 2026, GW10 to GW12."; }
 }
