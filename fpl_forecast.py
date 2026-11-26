@@ -727,10 +727,12 @@ def export_site(p, gws, ticker, bootstrap, out_dir, accuracy_path="accuracy.json
     import datetime as dt
     os.makedirs(out_dir, exist_ok=True)
     short = {t["id"]: t["short_name"] for t in bootstrap["teams"]}
+    tcode = {t["id"]: int(t["code"]) for t in bootstrap["teams"]}
     players = []  # everyone is exported, so a visitor's injured or benched players are always found
     for pid, r in p.iterrows():
         players.append({
             "id": int(pid), "n": str(r["web_name"]), "t": short[int(r["team"])], "p": str(r["pos"]),
+            "pc": int(_f(r.get("code"))), "tc": tcode[int(r["team"])],  # photo code and club code, for pictures on the page
             "c": round(float(r["price"]), 1), "a": round(float(r["avail_now"]), 2),
             "s": str(r["status"]), "w": str(r.get("news", "") or "")[:90],
             "ep": [round(float(r[f"gw{g}"]), 2) for g in gws],

@@ -96,13 +96,18 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pitch::after{content:"";position:absolute;left:50%;top:50%;width:90px;height:90px;border:1px solid var(--pitch-line);border-radius:50%;transform:translate(-50%,-50%)}
 .row{position:relative;z-index:1;display:flex;justify-content:space-around;gap:6px}
 .pl{position:relative;flex:1 1 0;max-width:118px;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;
-  padding:7px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;overflow:hidden}
+  padding:5px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;overflow:hidden}
 .pl b{font-size:12.5px;font-weight:650;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pl .fx{font-size:11px;color:var(--muted);white-space:nowrap}
 .pl .pts{font-family:var(--font-mono);font-size:15px;font-weight:500;margin-top:2px}
 .pl::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--fd,var(--line))}
 .cap{position:absolute;top:-1px;right:-1px;width:20px;height:20px;border-radius:0 9px 0 9px;background:var(--capt);color:var(--capt-ink);
   font-size:11px;font-weight:700;display:grid;place-items:center}
+.pl .ph{width:42px;height:53px;object-fit:cover;object-position:top;margin:0 0 1px;flex:none;display:block}
+.pl .ph.shirt{object-fit:contain;padding:6px 3px 2px}
+.bn .av{width:28px;height:28px;border-radius:50%;object-fit:cover;object-position:top;background:var(--pitch);flex:none;display:block}
+.bn .av.shirt{object-fit:contain;padding:3px}
+@media (max-width:560px){.pl .ph{width:34px;height:43px}.bn .av{width:24px;height:24px}}
 .side{display:flex;flex-direction:column;gap:18px;min-width:0}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .kv{display:flex;flex-wrap:wrap;gap:6px 22px}
@@ -498,6 +503,23 @@ function parseCell(c) {
 }
 const staticTicker = Object.keys(D.fx).map((t) => ({t, c:D.fx[t]}));
 
+/* ---------- player pictures: Premier League photo, then its older address, then the club shirt (keeper kit for GKs) */
+const PHOTO = (c) => `https://resources.premierleague.com/premierleague25/photos/players/110x140/${c}.png`;
+const PHOTO_OLD = (c) => `https://resources.premierleague.com/premierleague/photos/players/110x140/p${c}.png`;
+const SHIRT = (p) => `https://fantasy.premierleague.com/dist/img/shirts/standard/shirt_${p.tc}${p.p === "GK" ? "_1" : ""}-66.png`;
+function pic(p, cls) {
+  if (!p || (!p.pc && !p.tc)) return "";
+  const first = p.pc ? PHOTO(p.pc) : SHIRT(p);
+  return `<img class="${cls}${p.pc ? "" : " shirt"}" src="${first}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="110" height="140"` +
+    `${p.pc ? ` data-alt="${PHOTO_OLD(p.pc)}"` : ""}${p.tc ? ` data-shirt="${SHIRT(p)}"` : ""} onerror="picErr(this)">`;
+}
+function picErr(el) {
+  const d = el.dataset;
+  if (d.alt) { el.src = d.alt; delete d.alt; }
+  else if (d.shirt) { el.src = d.shirt; delete d.shirt; el.classList.add("shirt"); }
+  else el.remove();
+}
+
 /* ---------- plan component */
 function decHtml(title, trs, o) {
   return `<h3>${esc(title)}</h3>` +
@@ -516,11 +538,11 @@ function mountPlan(root, cfg) {
     const node = (p) => {
       const f = cfg.fx(p.t, i) || {blank:true};
       const cap = p.n === w.cap && w.xi && Object.values(w.xi).flat().includes(p) ? `<span class="cap" title="Captain">C</span>` : "";
-      return `<div class="pl" title="${esc(p.n)} · ${esc(p.t)} · £${p.c.toFixed(1)}m" style="--fd:${f.blank ? "var(--line)" : `var(--d${f.mod})`}">${cap}<b>${esc(p.n)}</b><span class="fx">${f.blank ? "No game" : esc(f.label || `${f.opp} (${f.ven})`)}</span><span class="pts">${fmt(p.pts)}</span></div>`;
+      return `<div class="pl" title="${esc(p.n)} · ${esc(p.t)} · £${p.c.toFixed(1)}m" style="--fd:${f.blank ? "var(--line)" : `var(--d${f.mod})`}">${cap}${pic(p, "ph")}<b>${esc(p.n)}</b><span class="fx">${f.blank ? "No game" : esc(f.label || `${f.opp} (${f.ven})`)}</span><span class="pts">${fmt(p.pts)}</span></div>`;
     };
     $(".pitch", root).innerHTML = ["FWD","MID","DEF","GK"].map((k) => `<div class="row">${w.xi[k].map(node).join("")}</div>`).join("");
     $(".dec", root).innerHTML = w.dec;
-    $(".bench", root).innerHTML = w.bench.map((b, n) => `<div class="bn"><i>${n + 1}</i><b>${esc(b.n)}</b><span>${fmt(b.pts)}</span></div>`).join("");
+    $(".bench", root).innerHTML = w.bench.map((b, n) => `<div class="bn"><i>${n + 1}</i>${pic(b, "av")}<b>${esc(b.n)}</b><span>${fmt(b.pts)}</span></div>`).join("");
   };
   draw();
 }
@@ -528,11 +550,13 @@ function mountPlan(root, cfg) {
 /* ---------- example (static snapshot) */
 function mountExample() {
   const weeks = {};
+  // the snapshot only has names and clubs: borrow picture codes from the live data when it has loaded
+  const look = (n, t) => { const q = P && P.players.find((x) => x.n === n && x.t === t); return q ? {pc:q.pc, tc:q.tc, p:q.p} : {}; };
   for (const g of D.gws) {
     const w = D.weeks[g], xi = {};
-    for (const k of POS) xi[k] = w.xi[k].map((a) => ({n:a[0], t:a[1], c:a[2], pts:a[3]}));
+    for (const k of POS) xi[k] = w.xi[k].map((a) => ({...look(a[0], a[1]), n:a[0], t:a[1], c:a[2], p:k, pts:a[3]}));
     const cap = Object.values(xi).flat().find((p) => p.n === w.cap);
-    weeks[g] = {xi, cap:w.cap, bench:w.bench.map((b) => ({n:b[0], pts:b[3]})),
+    weeks[g] = {xi, cap:w.cap, bench:w.bench.map((b) => ({...look(b[0], b[1]), n:b[0], pts:b[3]})),
       dec:decHtml(`GW${g} decisions`, w.tr, {cap:w.cap, ft:w.ft, hits:w.hits, proj:w.proj, capPts:cap.pts})};
   }
   mountPlan($("#example"), {gws:D.gws, weeks, fx:(t, i) => parseCell(D.fx[t][i])});
@@ -665,7 +689,7 @@ function renderUser() {
     const r = bestXI(final, i), xi = {GK:[], DEF:[], MID:[], FWD:[]};
     r.xi.forEach((p) => xi[p.p].push({...p, pts:p.ep[i]}));
     const o = {cap:r.cap.n, ft:i === 0 ? ft : "-", hits:i === 0 ? best.hits : 0, proj:r.total - 4 * (i === 0 ? best.hits : 0), capPts:r.cap.ep[i]};
-    weeks[g] = {xi, proj:o.proj, cap:r.cap.n, bench:r.bench.map((p) => ({n:p.n, pts:p.ep[i]})),
+    weeks[g] = {xi, proj:o.proj, cap:r.cap.n, bench:r.bench.map((p) => ({...p, pts:p.ep[i]})),
       dec:i === 0 ? decHtml(`GW${g} decisions`, trs, {...o, noTr:ft >= 5 ? "No move gains points this week. You're at the 5 free-transfer cap, so rolling wastes one; a sideways move costs nothing." : "Roll the free transfer: no move clears the bar this week."})
                   : decHtml(`GW${g}`, [], {...o, noTr:"Squad held from the first week's decision."})};
     // pitch nodes must share identity with the captain check
@@ -868,7 +892,7 @@ function bestSquad() {
     r.xi.forEach((p) => xi[p.p].push({...p, pts:p.ep[i]}));
     const cost = sq.reduce((s, p) => s + p.c, 0);
     gws.push(b.gw);
-    weeks[b.gw] = {xi, cap:r.cap.n, bench:r.bench.map((p) => ({n:p.n, pts:p.ep[i]})),
+    weeks[b.gw] = {xi, cap:r.cap.n, bench:r.bench.map((p) => ({...p, pts:p.ep[i]})),
       dec:`<h3>Best 15 for GW${b.gw}</h3>` +
         `<div class="kv"><div><span>Projected</span><strong class="mono">${fmt(r.total)}</strong></div><div><span>Captain</span><strong>${esc(r.cap.n)}</strong></div><div><span>Formation</span><strong class="mono">${xi.DEF.length}-${xi.MID.length}-${xi.FWD.length}</strong></div><div><span>Cost</span><strong class="mono">£${cost.toFixed(1)}m</strong></div></div>` +
         `<p class="note">Captain counts double: ${esc(r.cap.n)} projects ${fmt(r.cap.ep[i])}, worth ${fmt(r.cap.ep[i] * 2)}. £${Math.max(0, 100 - cost).toFixed(1)}m left over: spending it would not add projected points this week.</p>`};
